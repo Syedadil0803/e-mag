@@ -1139,7 +1139,6 @@ ${slides}
         /* PageNavigator styles */
         .page-navigator {
           background: var(--color-bg-2);
-          border-bottom: 1px solid var(--color-border);
           padding: 4px 8px;
           display: flex;
           align-items: center;
