@@ -41,19 +41,25 @@ export const PageNavigator: React.FC<PageNavigatorProps> = ({
         });
     };
 
+    const contentPages = pages.filter(p => p.type !== 'back_cover');
+    const closingPage = pages.find(p => p.type === 'back_cover');
+    const closingPageIndex = pages.findIndex(p => p.type === 'back_cover');
+
     return (
         <div className="page-navigator">
             <div className="page-navigator-scroll">
-                {pages.map((page, index) => (
+                {contentPages.map((page, index) => (
                     <div
                         key={page.id}
-                        className={`page-tab ${index === currentPageIndex ? 'active' : ''}`}
+                        className={`page-tab ${index === currentPageIndex ? 'active' : ''} ${page.type !== 'content' ? 'special-page' : ''}`}
                         onClick={() => onPageSelect(index)}
                         onMouseEnter={() => setHoveredIndex(index)}
                         onMouseLeave={() => setHoveredIndex(null)}
                     >
-                        <span className="page-tab-name">{index + 1}</span>
-                        {pages.length > 1 && (
+                        <span className="page-tab-name">
+                            {page.type === 'cover' ? `Cover (1)` : index + 1}
+                        </span>
+                        {page.type === 'content' && (
                             <button
                                 className="page-tab-delete"
                                 onClick={(e) => handleDeleteClick(e, index)}
@@ -68,6 +74,18 @@ export const PageNavigator: React.FC<PageNavigatorProps> = ({
                 <button className="add-page-btn" onClick={onAddPage} aria-label="Add new page">
                     <IconPlus />
                 </button>
+
+                {closingPage && (
+                    <div
+                        key={closingPage.id}
+                        className={`page-tab special-page ${closingPageIndex === currentPageIndex ? 'active' : ''}`}
+                        onClick={() => onPageSelect(closingPageIndex)}
+                        onMouseEnter={() => setHoveredIndex(closingPageIndex)}
+                        onMouseLeave={() => setHoveredIndex(null)}
+                    >
+                        <span className="page-tab-name">Closing ({closingPageIndex + 1})</span>
+                    </div>
+                )}
             </div>
         </div>
     );

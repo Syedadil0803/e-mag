@@ -21,20 +21,22 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0;
-    width: 32px;
-    /* Smaller */
+    min-width: 32px;
     height: 32px;
-    /* Smaller */
-    padding: 0;
+    padding: 0 4px;
     background: var(--color-bg-3);
     border: 1px solid var(--color-border);
     border-radius: 50%;
     cursor: pointer;
     transition: all 0.2s ease;
     user-select: none;
-    min-width: unset;
     overflow: visible;
+
+    &.special-page {
+      border-radius: 16px;
+      padding: 0 12px;
+      width: auto;
+    }
 
     &:hover {
       background: var(--color-bg-4);
@@ -57,7 +59,6 @@
 
     .page-tab-name {
       font-size: 12px;
-      /* Smaller */
       color: var(--color-text-1);
       white-space: nowrap;
     }
@@ -65,7 +66,6 @@
     .page-tab-delete {
       position: absolute;
       top: -6px;
-      /* Adjusted for smaller size */
       right: -6px;
       display: flex;
       align-items: center;
@@ -74,25 +74,18 @@
       height: 16px;
       padding: 0;
       background: #999;
-      /* Gray initially */
       border: 2px solid white;
-      /* Border to separate from tab */
       border-radius: 50%;
       cursor: pointer;
       color: white;
-
-      /* Hidden state */
       opacity: 0;
       transform: scale(0.5);
       pointer-events: none;
-      /* Prevent accidental clicks when hidden */
       transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-
       z-index: 20;
 
       &:hover {
         background: #000;
-        /* Black on hover */
         transform: scale(1.1);
       }
 
@@ -102,7 +95,6 @@
       }
     }
 
-    /* Show on Parent Hover */
     &:hover .page-tab-delete {
       opacity: 1;
       transform: scale(1);
@@ -114,12 +106,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0;
-    padding: 0;
     width: 32px;
-    /* Smaller */
     height: 32px;
-    /* Smaller */
     background: transparent;
     border: 2px dashed var(--color-border);
     border-radius: 50%;
@@ -127,7 +115,7 @@
     transition: all 0.2s ease;
     color: var(--color-text-2);
     font-size: 12px;
-    min-width: unset;
+    flex-shrink: 0;
 
     &:hover {
       border-color: #69c0ff;

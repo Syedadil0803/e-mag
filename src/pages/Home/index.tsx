@@ -184,6 +184,8 @@ export default function Editor() {
     const slides = allPages.map((page, index) => {
       console.log(`Converting ${page.name} to HTML...`);
 
+      const isCover = page.type === 'cover' || page.type === 'back_cover';
+
       const fullHtml = mjml(
         JsonToMjml({
           data: page.content,
@@ -203,7 +205,7 @@ export default function Editor() {
 
       return `
       <!-- ${page.name} -->
-      <div class="page">
+      <div class="page ${isCover ? '--cover' : ''}" ${isCover ? 'data-density="hard"' : ''}>
         <div class="page-content">
           ${bodyContent}
         </div>
@@ -436,23 +438,8 @@ export default function Editor() {
     <div class="loader">Loading Magazine...</div>
 
     <div id="book" class="flip-book">
-      <!-- Cover -->
-      <div class="page --cover" data-density="hard">
-          <div style="height:100%; display:flex; justify-content:center; align-items:center; text-align:center; flex-direction:column; padding: 20px;">
-              <h1 style="font-size: 32px; margin-bottom: 20px;">${templateOriginalData?.subject || 'Magazine'}</h1>
-              <p style="font-size: 14px; opacity: 0.8;">Click corners to flip</p>
-          </div>
-      </div>
-
-      <!-- Content Pages -->
+      <!-- Pages are injected here via JS/HTML loop -->
 ${slides}
-
-      <!-- Back Cover -->
-      <div class="page --cover" data-density="hard">
-          <div style="height:100%; display:flex; justify-content:center; align-items:center;">
-              <h3>The End</h3>
-          </div>
-      </div>
     </div>
   </div>
 
@@ -517,15 +504,15 @@ ${slides}
     });
 
     function updatePageDisplay(index) {
-       document.getElementById('pageDisplay').innerText = 'Page ' + (index) + ' / ' + (totalPages - 1);
-       document.getElementById('pageInput').value = index === 0 ? '' : index;
+       document.getElementById('pageDisplay').innerText = 'Page ' + (index + 1) + ' / ' + totalPages;
+       document.getElementById('pageInput').value = index + 1;
     }
 
     function goToPage() {
        const input = document.getElementById('pageInput');
        const pageNum = parseInt(input.value);
-       if(pageNum >= 0 && pageNum < totalPages) {
-           pageFlip.flip(pageNum);
+       if(pageNum >= 1 && pageNum <= totalPages) {
+           pageFlip.flip(pageNum - 1);
        } else {
            alert('Invalid page number');
        }
