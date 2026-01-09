@@ -100,7 +100,7 @@ const pagesSlice = createSlice({
             const index = action.payload;
             const pageToDelete = state.pages[index];
             
-            // Don't delete covers if we want to keep the structure
+            // Don't delete covers
             if (pageToDelete.type === 'cover' || pageToDelete.type === 'back_cover') {
                 return;
             }
@@ -125,11 +125,11 @@ const pagesSlice = createSlice({
         },
         initializeFromTemplate: (state, action: PayloadAction<{ content: IBlockData; pages?: Page[] }>) => {
             if (action.payload.pages && action.payload.pages.length > 0) {
-                // Multi-page template
+            // Multi-page template
                 state.pages = reindexPages(action.payload.pages);
                 state.currentPageIndex = 0;
             } else {
-                // Single page template (backward compatibility)
+            // Single page template
                 state.pages = reindexPages([
                     createEmptyPage(0, 'cover'),
                     {
