@@ -40,6 +40,24 @@ import "easy-email-editor/lib/style.css";
 import "easy-email-extensions/lib/style.css";
 import "antd/dist/antd.css";
 import appTheme from "@demo/styles/theme.css?inline";
+
+// Hide desktop and mobile preview tabs
+const hidePreviewTabsCSS = `
+  .easy-email-editor-tabWrapper .icon-desktop,
+  .easy-email-editor-tabWrapper .icon-mobile {
+    display: none !important;
+  }
+  .easy-email-editor-tabWrapper .easy-email-editor-tabItem:has(.icon-desktop),
+  .easy-email-editor-tabWrapper .easy-email-editor-tabItem:has(.icon-mobile) {
+    display: none !important;
+  }
+`;
+
+if (typeof document !== 'undefined') {
+  const style = document.createElement('style');
+  style.textContent = hidePreviewTabsCSS;
+  document.head.appendChild(style);
+}
 import { testMergeTags } from "./testMergeTags";
 import { useMergeTagsModal } from "./components/useMergeTagsModal";
 
