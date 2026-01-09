@@ -1,0 +1,173 @@
+.page-navigator {
+  background: var(--color-bg-2);
+  border-bottom: 1px solid var(--color-border);
+  padding: 4px 8px;
+  /* Reduced padding */
+  overflow-x: auto;
+  overflow-y: hidden;
+
+  .page-navigator-scroll {
+    display: flex;
+    gap: 8px;
+    /* Tighter gap */
+    align-items: center;
+    min-height: 36px;
+    /* Reduced height */
+    justify-content: center;
+  }
+
+  .page-tab {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    width: 32px;
+    /* Smaller */
+    height: 32px;
+    /* Smaller */
+    padding: 0;
+    background: var(--color-bg-3);
+    border: 1px solid var(--color-border);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+    min-width: unset;
+    overflow: visible;
+
+    &:hover {
+      background: var(--color-bg-4);
+      border-color: #69c0ff;
+      transform: translateY(-1px);
+      z-index: 10;
+    }
+
+    &.active {
+      background: #e6f7ff;
+      border-color: #69c0ff;
+      color: #1890ff;
+      font-weight: 600;
+      box-shadow: 0 2px 8px rgba(24, 144, 255, 0.15);
+
+      .page-tab-name {
+        color: #1890ff;
+      }
+    }
+
+    .page-tab-name {
+      font-size: 12px;
+      /* Smaller */
+      color: var(--color-text-1);
+      white-space: nowrap;
+    }
+
+    .page-tab-delete {
+      position: absolute;
+      top: -6px;
+      /* Adjusted for smaller size */
+      right: -6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+      padding: 0;
+      background: #999;
+      /* Gray initially */
+      border: 2px solid white;
+      /* Border to separate from tab */
+      border-radius: 50%;
+      cursor: pointer;
+      color: white;
+
+      /* Hidden state */
+      opacity: 0;
+      transform: scale(0.5);
+      pointer-events: none;
+      /* Prevent accidental clicks when hidden */
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+      z-index: 20;
+
+      &:hover {
+        background: #000;
+        /* Black on hover */
+        transform: scale(1.1);
+      }
+
+      svg {
+        font-size: 9px;
+        min-width: 9px;
+      }
+    }
+
+    /* Show on Parent Hover */
+    &:hover .page-tab-delete {
+      opacity: 1;
+      transform: scale(1);
+      pointer-events: auto;
+    }
+  }
+
+  .add-page-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    padding: 0;
+    width: 32px;
+    /* Smaller */
+    height: 32px;
+    /* Smaller */
+    background: transparent;
+    border: 2px dashed var(--color-border);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--color-text-2);
+    font-size: 12px;
+    min-width: unset;
+
+    &:hover {
+      border-color: #69c0ff;
+      color: #1890ff;
+      background: #e6f7ff;
+      transform: translateY(-1px);
+    }
+
+    svg {
+      font-size: 14px;
+    }
+  }
+}
+
+// Scrollbar styling
+.page-navigator::-webkit-scrollbar {
+  height: 6px;
+}
+
+.page-navigator::-webkit-scrollbar-track {
+  background: var(--color-bg-1);
+}
+
+.page-navigator::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 3px;
+
+  &:hover {
+    background: var(--color-text-4);
+  }
+}
+
+// Dark mode adjustments
+[arco-theme='dark'] {
+  .page-navigator {
+    .page-tab {
+      &.active {
+        background: rgba(var(--primary-6), 0.2);
+        box-shadow: 0 2px 8px rgba(var(--primary-6), 0.25);
+      }
+    }
+  }
+}
