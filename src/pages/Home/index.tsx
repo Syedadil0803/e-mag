@@ -2,7 +2,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Button, Message, PageHeader } from "@arco-design/web-react";
 import { useQuery } from "@demo/hooks/useQuery";
-import { useHistory } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { cloneDeep, set } from "lodash";
 import { Loading } from "@demo/components/loading";
@@ -30,12 +29,7 @@ import { FormApi } from "final-form";
 import { Stack } from "@demo/components/Stack";
 
 import { useCollection } from "./components/useCollection";
-import {
-  AdvancedType,
-  BasicType,
-  IBlockData,
-  JsonToMjml,
-} from "easy-email-core";
+import { JsonToMjml } from "easy-email-core";
 import { ITemplate } from "@demo/services/template";
 import { BlockMarketManager, StandardLayout } from "easy-email-extensions";
 import { AutoSaveAndRestoreEmail } from "@demo/components/AutoSaveAndRestoreEmail";
@@ -75,7 +69,6 @@ export default function Editor() {
   const [templateOriginalData, setTemplateOriginalData] = useState<ITemplate>();
   const [loading, setLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const history = useHistory();
   const { collectionCategory } = useCollection();
 
   const { width } = useWindowSize();
@@ -171,7 +164,7 @@ export default function Editor() {
     });
   }, []);
 
-  const onExportHtml = (values: IEmailTemplate) => {
+  const getFlipBookHtml = (values: IEmailTemplate) => {
     // Update current page content first
     const allPages = [...pages];
     allPages[currentPageIndex] = {
@@ -203,9 +196,8 @@ export default function Editor() {
 
         return `
       <!-- ${page.name} -->
-      <div class="page ${isCover ? "--cover" : ""}" ${
-          isCover ? 'data-density="hard"' : ""
-        }>
+      <div class="page ${isCover ? "--cover" : ""}" ${isCover ? 'data-density="hard"' : ""
+          }>
         <div class="page-content">
           ${bodyContent}
         </div>
@@ -217,7 +209,7 @@ export default function Editor() {
       .join("\n");
 
     // Create complete FlipBook HTML with PDF-viewer-style interface
-    const flipBookHtml = `<!DOCTYPE html>
+    return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -779,8 +771,20 @@ ${slides}
   </script>
 </body>
 </html>`;
+  };
 
-    copy(flipBookHtml);
+  const onPreviewHtml = (values: IEmailTemplate) => {
+    const html = getFlipBookHtml(values);
+    const win = window.open("", "_blank");
+    if (win) {
+      win.document.write(html);
+      win.document.close();
+    }
+  };
+
+  const onExportHtml = (values: IEmailTemplate) => {
+    const html = getFlipBookHtml(values);
+    copy(html);
     Message.success("Copied to clipboard!");
   };
 
@@ -986,9 +990,8 @@ ${slides}
                         .map((page, index) => (
                           <div
                             key={page.id}
-                            className={`page-tab ${
-                              index === currentPageIndex ? "active" : ""
-                            } ${page.type !== "content" ? "special-page" : ""}`}
+                            className={`page-tab ${index === currentPageIndex ? "active" : ""
+                              } ${page.type !== "content" ? "special-page" : ""}`}
                             onClick={() => handlePageSelect(index, values)}
                           >
                             <span className="page-tab-name">
@@ -1028,12 +1031,11 @@ ${slides}
                       {pages.find((p) => p.type === "back_cover") && (
                         <div
                           key={pages.find((p) => p.type === "back_cover")?.id}
-                          className={`page-tab special-page ${
-                            pages.findIndex((p) => p.type === "back_cover") ===
-                            currentPageIndex
+                          className={`page-tab special-page ${pages.findIndex((p) => p.type === "back_cover") ===
+                              currentPageIndex
                               ? "active"
                               : ""
-                          }`}
+                            }`}
                           onClick={() =>
                             handlePageSelect(
                               pages.findIndex((p) => p.type === "back_cover"),
@@ -1061,6 +1063,7 @@ ${slides}
                       icon={isDarkMode ? <IconMoonFill /> : <IconSunFill />}
                     ></Button>
 
+                    <Button onClick={() => onPreviewHtml(values)}>View</Button>
                     <Button onClick={() => onExportHtml(values)}>
                       Export html
                     </Button>
