@@ -47,7 +47,7 @@ export default createSliceState({
       const pageBlock = BlockManager.getBlockByType(BasicType.PAGE)?.create({
         // @ts-ignore: Object is possibly 'null'.
         attributes: {
-          width: '1100px',
+          width: '794px',
         },
       });
       if (pageBlock) {

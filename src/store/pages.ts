@@ -20,7 +20,7 @@ export interface PagesState {
 const createEmptyPage = (order: number, type: PageType = 'content', customName?: string): Page => {
     const pageBlock = BlockManager.getBlockByType(BasicType.PAGE)?.create({
         attributes: {
-            width: '1100px',
+            width: '794px',
         },
     });
 
