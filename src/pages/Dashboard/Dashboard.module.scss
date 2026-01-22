@@ -1,0 +1,176 @@
+.layout {
+    height: 100vh;
+    background-color: #f4f7fa;
+}
+
+.sider {
+    background: #ffffff;
+    border-right: 1px solid #e5e8ef;
+    display: flex;
+    flex-direction: column;
+
+    :global(.arco-layout-sider-children) {
+        display: flex;
+        flex-direction: column;
+    }
+}
+
+.logoContainer {
+    height: 64px;
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    gap: 12px;
+
+    .logoText {
+        font-size: 20px;
+        font-weight: 700;
+        color: #1d2129;
+        letter-spacing: -0.5px;
+    }
+}
+
+.menu {
+    flex: 1;
+    border: none;
+    padding: 16px 8px;
+
+    :global(.arco-menu-item) {
+        margin-bottom: 4px;
+        border-radius: 8px;
+        color: #4e5969;
+        font-weight: 500;
+        transition: all 0.2s cubic-bezier(0.34, 0.69, 0.1, 1);
+
+        &:hover {
+            background-color: #f2f3f5;
+        }
+
+        & :global(.arco-icon) {
+            font-size: 18px;
+            margin-right: 12px;
+        }
+    }
+
+    :global(.arco-menu-item.arco-menu-selected) {
+        background-color: #2D5A9E !important;
+        color: #ffffff !important;
+        box-shadow: 0 4px 12px rgba(45, 90, 158, 0.2);
+
+        & :global(.arco-icon) {
+            color: #ffffff;
+        }
+    }
+}
+
+.siderFooter {
+    padding: 16px 24px 24px;
+    border-top: 1px solid #f2f3f5;
+
+    .logoutBtn {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 12px;
+        border-radius: 8px;
+        cursor: pointer;
+        color: #4e5969;
+        font-weight: 500;
+        margin-bottom: 16px;
+        transition: all 0.2s cubic-bezier(0.34, 0.69, 0.1, 1);
+
+        .logoutIcon {
+            font-size: 18px;
+        }
+
+        &:hover {
+            background-color: #ffece8;
+            color: #f53f3f;
+        }
+    }
+
+    .poweredBy {
+        font-size: 12px;
+        color: #86909c;
+        margin: 0;
+        text-align: center;
+    }
+}
+
+.header {
+    height: 64px;
+    background: #ffffff;
+    border-bottom: 1px solid #e5e8ef;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 32px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+}
+
+.roleTitle {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1d2129;
+}
+
+.headerRight {
+    display: flex;
+    align-items: center;
+}
+
+.newContentBtn {
+    background-color: #2D5A9E;
+    border-color: #2D5A9E;
+    border-radius: 8px;
+    height: 38px;
+    padding: 0 20px;
+    font-weight: 600;
+
+    &:hover {
+        background-color: #1e4481;
+        border-color: #1e4481;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(45, 90, 158, 0.25);
+    }
+}
+
+.icon {
+    font-size: 20px;
+    color: #4e5969;
+    cursor: pointer;
+    transition: color 0.2s;
+
+    &:hover {
+        color: #1d2129;
+    }
+}
+
+.userInfo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 8px;
+    transition: background 0.2s;
+
+    &:hover {
+        background: #f2f3f5;
+    }
+
+    .userName {
+        font-weight: 500;
+        color: #1d2129;
+    }
+}
+
+.content {
+    padding: 32px;
+    overflow-y: auto;
+}
+
+.contentInner {
+    max-width: 1400px;
+    margin: 0 auto;
+}

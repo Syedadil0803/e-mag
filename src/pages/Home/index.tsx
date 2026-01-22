@@ -495,6 +495,19 @@ export default function Editor() {
                     >
                       Save
                     </Button>
+                    <Button
+                      onClick={() => {
+                        Modal.confirm({
+                          title: 'Logout',
+                          content: 'Are you sure you want to logout?',
+                          onOk: () => {
+                            window.location.href = '/';
+                          },
+                        });
+                      }}
+                    >
+                      Logout
+                    </Button>
                   </Stack>
                 }
               />
