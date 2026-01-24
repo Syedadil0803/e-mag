@@ -28,14 +28,6 @@ const CreateMagazine = () => {
             textColor: '#000',
             accent: '#F05A28'
         },
-        {
-            id: 3,
-            name: 'Creative Portfolio',
-            description: 'Minimalist layout for creatives.',
-            bg: 'linear-gradient(to right, #fa709a 0%, #fee140 100%)', // Vibrant gradient
-            textColor: '#fff',
-            accent: '#fff'
-        },
     ];
 
     const handleTemplateSelect = (id: number) => {
