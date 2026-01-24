@@ -94,7 +94,7 @@ export default function Editor() {
 
   const smallScene = width < 1200;
 
-  const { template_id, token } = useQuery();
+  const { template_id, token, subject } = useQuery();
   const { mergeTags, setMergeTags } = useMergeTagsModal(testMergeTags);
 
   useEffect(() => {
@@ -215,6 +215,7 @@ export default function Editor() {
 
     return {
       subject:
+        subject ||
         templateOriginalData?.subject ||
         templateData.subject ||
         "Welcome to E-Magazine",
@@ -224,7 +225,7 @@ export default function Editor() {
         "Nice to meet you!",
       content: currentPage.content,
     };
-  }, [pages, currentPageIndex, templateOriginalData, templateData]);
+  }, [pages, currentPageIndex, templateOriginalData, templateData, subject]);
 
   const onSubmit = useCallback(
     async (

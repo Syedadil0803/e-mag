@@ -1,9 +1,24 @@
 import { AdvancedType, BasicType, BlockManager } from 'easy-email-core';
 import { request } from './axios.config';
 import { IEmailTemplate } from 'easy-email-editor';
+import { getMockTemplate } from './mockTemplates';
 
 export const template = {
   async getTemplate(templateName: number | string, token: string): Promise<ITemplate> {
+    const id = Number(templateName);
+    if (id === 1 || id === 2) {
+      const mockData = getMockTemplate(id);
+      return {
+        templateName: id === 1 ? 'University Chronicle' : 'The Campus Review',
+        subject: 'University Chronicle',
+        html: '',
+        text: 'Autumn Edition',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        id: 1,
+        helperJson: JSON.stringify(mockData),
+      };
+    }
     return request.get<ITemplate>(`/email/template/get`, {
       params: {
         templateName,
@@ -28,12 +43,12 @@ export const template = {
       helperJson: typeof helperJson === 'string' ? helperJson : JSON.stringify(helperJson),
     });
   },
-  fetchDefaultTemplate:  () => {
+  fetchDefaultTemplate: () => {
     const pageBlock = BlockManager.getBlockByType(BasicType.PAGE)?.create({
       // @ts-ignore: Object is possibly 'null'.
-        attributes: {
-          width: '794px',
-        },
+      attributes: {
+        width: '794px',
+      },
     });
     if (pageBlock) {
       pageBlock.children = [];
@@ -44,12 +59,12 @@ export const template = {
       content: pageBlock,
     } as IEmailTemplate;
   },
-  fetchDefaultTemplateOriginalData:  () => {
+  fetchDefaultTemplateOriginalData: () => {
     const pageBlock = BlockManager.getBlockByType(BasicType.PAGE)?.create({
       // @ts-ignore: Object is possibly 'null'.
-        attributes: {
-          width: '794px',
-        },
+      attributes: {
+        width: '794px',
+      },
     });
     if (pageBlock) {
       pageBlock.children = [];

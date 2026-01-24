@@ -10,6 +10,7 @@ import { history } from './utils/history';
 import Home from '@demo/pages/Home';
 import Login from '@demo/pages/Login';
 import Dashboard from '@demo/pages/Dashboard';
+import CreateMagazine from '@demo/pages/CreateMagazine';
 
 function App() {
   return (
@@ -58,6 +59,11 @@ function App() {
                   path='/editor'
                   exact
                   component={Home}
+                />
+                <Route
+                  path='/create-magazine'
+                  exact
+                  component={CreateMagazine}
                 />
               </Switch>
             </Router>

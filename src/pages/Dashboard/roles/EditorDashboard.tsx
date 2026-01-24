@@ -12,7 +12,7 @@ const EditorDashboard: React.FC = () => {
     const history = useHistory();
 
     const handleNewContent = () => {
-        history.push('/editor');
+        history.push('/create-magazine');
     };
 
     const dummyArticles = [
