@@ -4,6 +4,8 @@ import { article } from './article';
 import { user } from './user';
 import { template } from './template';
 import rbac from './rbac';
+import content from './content';
+import editor from './editor';
 
 const services = {
   common,
@@ -11,6 +13,8 @@ const services = {
   user,
   template,
   rbac,
+  content,
+  editor,
 };
 
 export default services;
