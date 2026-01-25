@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Layout, Menu, Button, Avatar, Badge, Space, Breadcrumb, Dropdown } from '@arco-design/web-react';
 import {
     IconDashboard,
@@ -11,9 +10,10 @@ import {
     IconPoweroff,
 } from '@arco-design/web-react/icon';
 import { useHistory, useLocation } from 'react-router-dom';
-import { logout } from '@demo/services/auth';
+import { logout, getCurrentUser } from '@demo/services/auth';
 import { UserRole } from './types';
 import styles from './Dashboard.module.scss';
+import { usePermissions } from '../../hooks/usePermissions';
 
 const { Sider, Header, Content } = Layout;
 const MenuItem = Menu.Item;
@@ -22,41 +22,71 @@ interface DashboardLayoutProps {
     children: React.ReactNode;
     role: UserRole;
     userName: string;
+    userAvatar?: string;
 }
 
-const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, role, userName }) => {
+// Get user-friendly display name for roles
+const getRoleDisplayName = (): string => {
+    const currentUser = getCurrentUser();
+    if (!currentUser?.role) return 'Dashboard';
+
+    // Return the actual backend role name for display
+    // This ensures "Approver" shows as "Approver", not "Reviewer"
+    return currentUser.role;
+};
+
+const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, role, userName, userAvatar }) => {
     const history = useHistory();
     const location = useLocation();
+    const { canAccessPage, isAdmin } = usePermissions();
 
-    const menuItems = [
+    // All possible menu items
+    const allMenuItems = [
         {
             key: 'dashboard',
             icon: <IconDashboard />,
             label: 'Dashboard',
             path: '/dashboard',
+            requiredPage: 'Dashboard'
         },
         {
             key: 'content',
             icon: <IconFile />,
             label: 'Content',
             path: '/content',
+            requiredPage: 'Content'
         },
         {
             key: 'approvals',
             icon: <IconCheckCircle />,
             label: 'Approvals',
             path: '/approvals',
+            requiredPage: 'Approvals'
         },
         {
-            key: 'settings',
+            key: 'admin-settings',
             icon: <IconSettings />,
-            label: 'Settings',
-            path: '/settings',
+            label: 'Admin Settings',
+            path: '/admin-settings',
+            requiredPage: 'Settings'
         },
     ];
 
+    // Filter menu items based on permissions
+    const menuItems = useMemo(() => {
+        // Filter based on policies - No bypass!
+        return allMenuItems.filter(item => canAccessPage(item.requiredPage));
+    }, [canAccessPage]);
+
     const handleNewContent = () => {
         history.push('/editor');
+    };
+
+    const renderAvatar = () => {
+        if (userAvatar) {
+            return <img src={userAvatar} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />;
+        }
+        return <img src={`https://api.dicebear.com/7.x/initials/svg?seed=${userName}&backgroundColor=2d5a9e`} alt="avatar" />;
     };
 
     return (
@@ -104,7 +134,11 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, role, userN
             <Layout>
                 <Header className={styles.header}>
                     <div className={styles.headerLeft}>
-                        <span className={styles.roleTitle}>{role} Dashboard</span>
+                        <span className={styles.roleTitle}>
+                            {location.pathname.startsWith('/admin-settings')
+                                ? 'Admin Settings'
+                                : `${getRoleDisplayName()} Dashboard`}
+                        </span>
                     </div>
                     <div className={styles.headerRight}>
                         <Space size={20}>
@@ -127,7 +161,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, role, userN
                                     position='br'
                                 >
                                     <Avatar size={32} style={{ backgroundColor: '#f0f2f5', cursor: 'pointer' }}>
-                                        <img src="https://api.dicebear.com/7.x/initials/svg?seed=JD&backgroundColor=2d5a9e" alt="avatar" />
+                                        {renderAvatar()}
                                     </Avatar>
                                 </Dropdown>
                             </div>

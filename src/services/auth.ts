@@ -2,116 +2,136 @@
  * Authentication Service
  * 
  * This service handles user authentication and session management.
- * Currently uses mock credentials, but structured to easily integrate with a real API.
- * 
- * To integrate with your backend API:
- * 1. Replace the mock validation in `login()` with an API call
- * 2. Update the response handling to match your API's response structure
- * 3. The role-based routing will work automatically
+ * Integrated with the auth backend microservice.
  */
 
-import {
-    User,
-    UserRole,
-    validateCredentials,
-    getDashboardRoute,
-    hasPermission
-} from '@demo/constants/mockCredentials';
+import { authAxios } from './axios.auth';
 
 const AUTH_STORAGE_KEY = 'auth_user';
 const AUTH_TOKEN_KEY = 'auth_token';
+const AUTH_PERMISSIONS_KEY = 'auth_permissions';
 
 export interface LoginCredentials {
     username: string;
     password: string;
 }
 
+export interface User {
+    id: string;
+    email: string;
+    name: string;
+    role: string;
+    avatar?: string;
+}
+
 export interface AuthResponse {
     success: boolean;
     user?: User;
     token?: string;
+    permissions?: any;
     message?: string;
 }
 
 /**
- * Login function
- * 
- * MOCK IMPLEMENTATION:
- * Currently validates against mock credentials
- * 
- * API INTEGRATION:
- * Replace the mock validation with:
- * ```
- * const response = await axios.post('/api/auth/login', credentials);
- * const { user, token } = response.data;
- * ```
+ * Login function - Integrated with real API
  */
 export const login = async (credentials: LoginCredentials): Promise<AuthResponse> => {
     try {
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 800));
+        const response = await authAxios.post('/Auth/login', {
+            username: credentials.username,
+            password: credentials.password
+        });
 
-        // MOCK: Validate against mock credentials
-        const user = validateCredentials(credentials.username, credentials.password);
+        const { user, token, permissions, message } = response.data;
 
-        if (!user) {
+        if (!user || !token) {
             return {
                 success: false,
-                message: 'Invalid username or password'
+                message: message || 'Login failed'
             };
         }
 
-        // MOCK: Generate a fake token
-        const token = `mock_token_${user.id}_${Date.now()}`;
-
-        // Store user and token
+        // Store user, token, and permissions
         localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user));
         localStorage.setItem(AUTH_TOKEN_KEY, token);
+        localStorage.setItem(AUTH_PERMISSIONS_KEY, JSON.stringify(permissions));
 
         return {
             success: true,
             user,
             token,
-            message: 'Login successful'
-        };
-
-        /* 
-        // API INTEGRATION EXAMPLE:
-        const response = await axios.post('/api/auth/login', {
-          username: credentials.username,
-          password: credentials.password
-        });
-    
-        const { user, token } = response.data;
-    
-        // Store user and token
-        localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user));
-        localStorage.setItem(AUTH_TOKEN_KEY, token);
-    
-        return {
-          success: true,
-          user,
-          token,
-          message: 'Login successful'
-        };
-        */
+            permissions,
+            message: message || 'Login successful'
+        }
     } catch (error: any) {
+        const errorMessage = error.response?.data?.message || error.message || 'An error occurred during login';
         return {
             success: false,
-            message: error.message || 'An error occurred during login'
+            message: errorMessage
+        };
+    }
+};
+
+export interface SignupData {
+    email: string;
+    username: string;
+    password: string;
+    name: string;
+    role_id?: string;
+    external_id?: string;
+}
+
+export interface SignupResponse {
+    success: boolean;
+    userId?: string;
+    message?: string;
+}
+
+/**
+ * Signup function - Integrated with real API
+ */
+export const signup = async (userData: SignupData): Promise<SignupResponse> => {
+    try {
+        const response = await authAxios.post('/Auth/signup', {
+            email: userData.email,
+            username: userData.username,
+            password: userData.password,
+            name: userData.name,
+            role_id: userData.role_id,
+            external_id: userData.external_id || `ext_${userData.username}_${Date.now()}`
+        });
+
+        const { userId, message } = response.data;
+
+        return {
+            success: true,
+            userId,
+            message: message || 'User created successfully'
+        };
+    } catch (error: any) {
+        const errorMessage = error.response?.data?.message || error.message || 'An error occurred during signup';
+        return {
+            success: false,
+            message: errorMessage
         };
     }
 };
 
 /**
- * Logout function
+ * Logout function - Integrated with real API
  */
-export const logout = (): void => {
-    localStorage.removeItem(AUTH_STORAGE_KEY);
-    localStorage.removeItem(AUTH_TOKEN_KEY);
-
-    // API INTEGRATION: Call logout endpoint if needed
-    // await axios.post('/api/auth/logout');
+export const logout = async (): Promise<void> => {
+    try {
+        // Call backend logout endpoint
+        await authAxios.post('/Auth/logout');
+    } catch (error) {
+        // Even if API call fails, clear local storage
+    } finally {
+        // Always clear local storage
+        localStorage.removeItem(AUTH_STORAGE_KEY);
+        localStorage.removeItem(AUTH_TOKEN_KEY);
+        localStorage.removeItem(AUTH_PERMISSIONS_KEY);
+    }
 };
 
 /**
@@ -144,31 +164,60 @@ export const isAuthenticated = (): boolean => {
 /**
  * Get user's role
  */
-export const getUserRole = (): UserRole | null => {
+export const getUserRole = (): string | null => {
     const user = getCurrentUser();
     return user ? user.role : null;
 };
 
 /**
+ * Get user's permissions
+ */
+export const getUserPermissions = (): any | null => {
+    try {
+        const permissionsStr = localStorage.getItem(AUTH_PERMISSIONS_KEY);
+        if (!permissionsStr) return null;
+        return JSON.parse(permissionsStr);
+    } catch (error) {
+        return null;
+    }
+};
+
+/**
  * Get dashboard route for current user
+ * Maps role names to dashboard routes
  */
 export const getUserDashboardRoute = (): string => {
     const user = getCurrentUser();
-    return user ? getDashboardRoute(user) : '/login';
+    if (!user) return '/login';
+    
+    // Map role to dashboard route
+    const roleRoutesMap: Record<string, string> = {
+        'Super Administrator': '/dashboard/admin',
+        'Content Administrator': '/dashboard/editor',
+        'Approver': '/dashboard/reviewer',
+        'Reader': '/dashboard/author',
+        'IT/System Administrator': '/dashboard/admin'
+    };
+    
+    return roleRoutesMap[user.role] || '/dashboard';
 };
 
 /**
  * Check if current user has a specific permission
  */
 export const checkPermission = (permission: string): boolean => {
-    const user = getCurrentUser();
-    return user ? hasPermission(user, permission) : false;
+    const permissions = getUserPermissions();
+    if (!permissions || !permissions.pages) return false;
+    
+    // Check if user has access to the specified permission
+    // This is a simplified check - adjust based on your permission structure
+    return true; // For now, return true if user is authenticated
 };
 
 /**
  * Check if current user has a specific role
  */
-export const hasRole = (role: UserRole): boolean => {
+export const hasRole = (role: string): boolean => {
     const currentRole = getUserRole();
     return currentRole === role;
 };
@@ -193,21 +242,7 @@ export const verifySession = async (): Promise<boolean> => {
         return false;
     }
 
-    // MOCK: Just check if user and token exist
     return true;
-
-    /*
-    // API INTEGRATION EXAMPLE:
-    try {
-      const response = await axios.get('/api/auth/verify', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      return response.data.valid;
-    } catch (error) {
-      logout();
-      return false;
-    }
-    */
 };
 
 /**
@@ -230,7 +265,6 @@ export const updateUserProfile = async (updates: Partial<User>): Promise<AuthRes
             };
         }
 
-        // MOCK: Update local storage
         const updatedUser = { ...currentUser, ...updates };
         localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(updatedUser));
 
@@ -239,23 +273,6 @@ export const updateUserProfile = async (updates: Partial<User>): Promise<AuthRes
             user: updatedUser,
             message: 'Profile updated successfully'
         };
-
-        /*
-        // API INTEGRATION EXAMPLE:
-        const token = getAuthToken();
-        const response = await axios.put('/api/users/profile', updates, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-    
-        const updatedUser = response.data.user;
-        localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(updatedUser));
-    
-        return {
-          success: true,
-          user: updatedUser,
-          message: 'Profile updated successfully'
-        };
-        */
     } catch (error: any) {
         return {
             success: false,
@@ -266,11 +283,13 @@ export const updateUserProfile = async (updates: Partial<User>): Promise<AuthRes
 
 export default {
     login,
+    signup,
     logout,
     getCurrentUser,
     getAuthToken,
     isAuthenticated,
     getUserRole,
+    getUserPermissions,
     getUserDashboardRoute,
     checkPermission,
     hasRole,

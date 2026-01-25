@@ -1,15 +1,17 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Tabs, Button, Select } from '@arco-design/web-react';
 import { IconSearch, IconMoreVertical, IconPlus } from '@arco-design/web-react/icon';
 import styles from '../components/Components.module.scss';
 import { useHistory } from 'react-router-dom';
+import { usePermissions } from '../../../hooks/usePermissions';
 
 const TabPane = Tabs.TabPane;
 
 const EditorDashboard: React.FC = () => {
     const [activeTab, setActiveTab] = useState('1');
     const history = useHistory();
+    const { canAccessTab, isAdmin, canPerformAction, permissions } = usePermissions();
 
     const handleNewContent = () => {
         history.push('/create-magazine');
@@ -22,39 +24,58 @@ const EditorDashboard: React.FC = () => {
         { id: 4, title: 'Engineering Digest', year: '2025', dept: 'Commerce', status: 'Draft', date: '25 Jul' },
     ];
 
+    // All possible dashboard tabs
+    const allTabs = [
+        { key: '1', title: 'Draft', requiredTab: 'Draft' },
+        { key: '2', title: 'Under Review', requiredTab: 'UnderReview' },
+        { key: '3', title: 'Approved', requiredTab: 'Approved' },
+        { key: '4', title: 'Published', requiredTab: 'Published' },
+        { key: '5', title: 'Archived', requiredTab: 'Archived' },
+    ];
+
+    // Filter tabs based on permissions
+    const visibleTabs = useMemo(() => {
+        // Filter based on Dashboard tab permissions - No bypass!
+        return allTabs.filter(tab => canAccessTab('Dashboard', tab.requiredTab));
+    }, [canAccessTab]);
+
+    // Check if user can create content
+    const canCreateContent = canPerformAction('NewContent', 'View');
+
     return (
         <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-                <h2 style={{ fontSize: 24, fontWeight: 700, margin: 0 }}>Drafts</h2>
-                <Button
-                    type="secondary"
-                    icon={<IconPlus />}
-                    style={{
-                        borderRadius: 8,
-                        height: 40,
-                        padding: '0 20px',
-                        fontWeight: 600,
-                        border: '1px solid #d9d9d9',
-                        color: '#4e5969'
-                    }}
-                    onClick={handleNewContent}
-                >
-                    New Content
-                </Button>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                <div style={{ flex: 1 }}>
+                    <Tabs
+                        activeTab={activeTab}
+                        onChange={setActiveTab}
+                        size="large"
+                        className={styles.customTabs}
+                    >
+                        {visibleTabs.map(tab => (
+                            <TabPane key={tab.key} title={tab.title} />
+                        ))}
+                    </Tabs>
+                </div>
+                {canCreateContent && (
+                    <Button
+                        type="primary"
+                        icon={<IconPlus />}
+                        style={{
+                            borderRadius: 8,
+                            height: 38,
+                            padding: '0 20px',
+                            fontWeight: 600,
+                            background: '#4E7DD9',
+                            border: 'none',
+                            marginLeft: 16
+                        }}
+                        onClick={handleNewContent}
+                    >
+                        New Content
+                    </Button>
+                )}
             </div>
-
-            <Tabs
-                activeTab={activeTab}
-                onChange={setActiveTab}
-                size="large"
-                className={styles.customTabs}
-            >
-                <TabPane key="1" title="Draft" />
-                <TabPane key="2" title="Under Review" />
-                <TabPane key="3" title="Approved" />
-                <TabPane key="4" title="Published" />
-                <TabPane key="5" title="Archived" />
-            </Tabs>
 
             <div className={styles.contentGrid}>
                 {dummyArticles.map((article) => (
@@ -63,7 +84,7 @@ const EditorDashboard: React.FC = () => {
                             <div style={{
                                 width: '100%',
                                 height: '100%',
-                                background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+                                background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%',
                                 display: 'flex',
                                 flexDirection: 'column',
                                 padding: 20

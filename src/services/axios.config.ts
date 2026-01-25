@@ -2,22 +2,11 @@ import axios, { AxiosResponse, AxiosRequestConfig } from "axios";
 import { UserStorage } from "@demo/utils/user-storage";
 
 export const axiosInstance = axios.create({
-  // baseURL: 'https://api.fintechwerx.com',
   baseURL: "https://api.cwd.speedstack.tech/campaign",
 });
 
 axiosInstance.interceptors.request.use(async function (config) {
-  // try {
-  //   const token = await UserStorage.getToken();
-  //   if (!config.headers) {
-  //     config.headers = {};
-  //   }
-  //   config.headers.authorization = token;
-  // } catch (error) {
-  //   // window.location.assign(LOGIN_ADDRESS);
-  // } finally {
   return config;
-  // }
 });
 
 axiosInstance.interceptors.response.use(

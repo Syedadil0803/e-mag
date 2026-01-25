@@ -1,15 +1,18 @@
-
 import React, { useState } from 'react';
 import { Button, Select, Tag } from '@arco-design/web-react';
 import { IconPlus, IconRight } from '@arco-design/web-react/icon';
 import { useHistory } from 'react-router-dom';
 import styles from '../components/Components.module.scss';
+import { usePermissions } from '../../../hooks/usePermissions';
 
 const ReviewerDashboard: React.FC = () => {
     const history = useHistory();
+    const { canPerformAction } = usePermissions();
     const [statusFilter, setStatusFilter] = useState('Status: optional');
     const [authorFilter, setAuthorFilter] = useState('Author: US#1');
     const [dateFilter, setDateFilter] = useState('Revised Dates');
+
+    const canCreateContent = canPerformAction('NewContent', 'View');
 
     const getStatusColor = (status: string) => {
         switch (status.toLowerCase()) {
@@ -135,21 +138,23 @@ const ReviewerDashboard: React.FC = () => {
             {/* Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
                 <h2 style={{ fontSize: 24, fontWeight: 700, margin: 0, color: '#1d2129' }}>Reviewer Dashboard</h2>
-                <Button
-                    type="primary"
-                    icon={<IconPlus />}
-                    style={{
-                        borderRadius: 8,
-                        height: 40,
-                        padding: '0 20px',
-                        fontWeight: 600,
-                        background: '#4E7DD9',
-                        border: 'none'
-                    }}
-                    onClick={handleNewContent}
-                >
-                    New Content
-                </Button>
+                {canCreateContent && (
+                    <Button
+                        type="primary"
+                        icon={<IconPlus />}
+                        style={{
+                            borderRadius: 8,
+                            height: 40,
+                            padding: '0 20px',
+                            fontWeight: 600,
+                            background: '#4E7DD9',
+                            border: 'none'
+                        }}
+                        onClick={handleNewContent}
+                    >
+                        New Content
+                    </Button>
+                )}
             </div>
 
             {/* My Approval Queue */}

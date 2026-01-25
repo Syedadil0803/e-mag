@@ -9,8 +9,13 @@ import '@demo/styles/common.scss';
 import { history } from './utils/history';
 import Home from '@demo/pages/Home';
 import Login from '@demo/pages/Login';
+import Signup from '@demo/pages/Signup';
 import Dashboard from '@demo/pages/Dashboard';
 import CreateMagazine from '@demo/pages/CreateMagazine';
+import DashboardLayout from '@demo/pages/Dashboard/Layout';
+import AdminSettingsPage from '@demo/pages/Dashboard/AdminSettings';
+import ContentPage from '@demo/pages/Content';
+import ApprovalsPage from '@demo/pages/Approvals';
 
 function App() {
   return (
@@ -52,8 +57,25 @@ function App() {
                   component={Login}
                 />
                 <Route
+                  path='/signup'
+                  exact
+                  component={Signup}
+                />
+                <Route
                   path='/dashboard'
                   component={Dashboard}
+                />
+                <Route
+                  path='/content'
+                  component={ContentPage}
+                />
+                <Route
+                  path='/approvals'
+                  component={ApprovalsPage}
+                />
+                <Route
+                  path='/admin-settings'
+                  component={AdminSettingsPage}
                 />
                 <Route
                   path='/editor'

@@ -1,13 +1,16 @@
-
 import React, { useState } from 'react';
 import { Button, Tag, Avatar, Select } from '@arco-design/web-react';
 import { IconPlus, IconRight } from '@arco-design/web-react/icon';
 import { useHistory } from 'react-router-dom';
 import styles from '../components/Components.module.scss';
+import { usePermissions } from '../../../hooks/usePermissions';
 
 const AuthorDashboard: React.FC = () => {
     const history = useHistory();
+    const { canPerformAction } = usePermissions();
     const [sortFilter, setSortFilter] = useState('PUBLISHED');
+
+    const canCreateContent = canPerformAction('NewContent', 'View');
 
     const handleNewContent = () => {
         history.push('/editor');
@@ -126,22 +129,24 @@ const AuthorDashboard: React.FC = () => {
                                     { label: 'APPROVED', value: 'APPROVED' }
                                 ]}
                             />
-                            <Button
-                                type="primary"
-                                icon={<IconPlus />}
-                                style={{
-                                    borderRadius: 8,
-                                    height: 36,
-                                    padding: '0 16px',
-                                    fontWeight: 600,
-                                    background: '#4E7DD9',
-                                    border: 'none',
-                                    fontSize: 14
-                                }}
-                                onClick={handleNewContent}
-                            >
-                                New Content
-                            </Button>
+                            {canCreateContent && (
+                                <Button
+                                    type="primary"
+                                    icon={<IconPlus />}
+                                    style={{
+                                        borderRadius: 8,
+                                        height: 36,
+                                        padding: '0 16px',
+                                        fontWeight: 600,
+                                        background: '#4E7DD9',
+                                        border: 'none',
+                                        fontSize: 14
+                                    }}
+                                    onClick={handleNewContent}
+                                >
+                                    New Content
+                                </Button>
+                            )}
                         </div>
                     </div>
 

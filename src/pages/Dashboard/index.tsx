@@ -13,6 +13,7 @@ import { getCurrentUser, isAuthenticated, updateUserProfile } from '@demo/servic
 const Dashboard: React.FC = () => {
     const [userRole, setUserRole] = useState<UserRole | null>(null);
     const [userName, setUserName] = useState<string>('');
+    const [userAvatar, setUserAvatar] = useState<string | undefined>(undefined);
     const [loading, setLoading] = useState(true);
     const history = useHistory();
 
@@ -29,7 +30,8 @@ const Dashboard: React.FC = () => {
                 // Ensure role from auth service matches Dashboard types
                 // Casting as any to string to match if there are slight differences, but they should be aligned now
                 setUserRole(currentUser.role as unknown as UserRole);
-                setUserName(currentUser.fullName);
+                setUserName(currentUser.name || (currentUser as any).fullName);
+                setUserAvatar(currentUser.avatar);
             }
             setLoading(false);
         };
@@ -65,7 +67,7 @@ const Dashboard: React.FC = () => {
     };
 
     return (
-        <DashboardLayout role={userRole} userName={userName}>
+        <DashboardLayout role={userRole} userName={userName} userAvatar={userAvatar}>
 
 
             {renderDashboard()}

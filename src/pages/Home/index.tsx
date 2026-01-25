@@ -1,4 +1,3 @@
-/* eslint-disable react/jsx-wrap-multilines */
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Button, Message, PageHeader } from "@arco-design/web-react";
 import { useQuery } from "@demo/hooks/useQuery";
@@ -42,7 +41,6 @@ import "easy-email-extensions/lib/style.css";
 import "antd/dist/antd.css";
 import appTheme from "@demo/styles/theme.css?inline";
 
-// Hide desktop and mobile preview tabs
 const hidePreviewTabsCSS = `
   .easy-email-editor-tabWrapper .icon-desktop,
   .easy-email-editor-tabWrapper .icon-mobile {
@@ -119,9 +117,7 @@ export default function Editor() {
               if (typeof res.helperJson === "string") {
                 const obj = JSON.parse(res.helperJson);
 
-                // Check if it's multi-page format
                 if (obj.pages && Array.isArray(obj.pages)) {
-                  // Multi-page template
                   dispatch(
                     initializeFromTemplate({
                       content: obj.pages[0].content,
@@ -129,7 +125,6 @@ export default function Editor() {
                     })
                   );
                 } else {
-                  // Single page template (backward compatibility)
                   const footer = JSON.parse(res.footerJson);
                   if (footer) {
                     const json = JSON.parse(footer.helperJson);
@@ -232,14 +227,12 @@ export default function Editor() {
       values: IEmailTemplate,
       form: FormApi<IEmailTemplate, Partial<IEmailTemplate>>
     ) => {
-      // Update current page content
       const allPages = [...pages];
       allPages[currentPageIndex] = {
         ...allPages[currentPageIndex],
         content: values.content,
       };
 
-      // Generate HTML for all pages combined
       const html = mjml(
         JsonToMjml({
           data: values.content,
@@ -255,7 +248,6 @@ export default function Editor() {
 
       setIsSubmitting(true);
 
-      // Save with multi-page structure
       const multiPageData = {
         pages: allPages,
       };
@@ -272,7 +264,6 @@ export default function Editor() {
         .then((res: any) => {
           setIsSubmitting(false);
           if (res && res.status && res.status === "200") {
-            // Update Redux state
             dispatch(updateCurrentPageContent(values.content));
             form.restart(values);
             Message.success("Magazine saved successfully!");
@@ -299,12 +290,10 @@ export default function Editor() {
       return engine.renderSync(tpl, mergeTags);
     }, []);
 
-  // Page navigation handlers
   const handlePageSelect = useCallback(
     (index: number, currentValues?: IEmailTemplate) => {
       if (index === currentPageIndex) return;
 
-      // Save current page content before switching
       if (currentValues) {
         const updatedPages = [...pages];
         updatedPages[currentPageIndex] = {
@@ -314,7 +303,6 @@ export default function Editor() {
         dispatch(setPages(updatedPages));
       }
 
-      // Switch to new page
       dispatch(setCurrentPageIndex(index));
     },
     [currentPageIndex, pages, dispatch]
@@ -322,7 +310,6 @@ export default function Editor() {
 
   const handleAddPage = useCallback(
     (currentValues?: IEmailTemplate) => {
-      // Save current page content before adding new page
       if (currentValues) {
         const updatedPages = [...pages];
         updatedPages[currentPageIndex] = {
@@ -527,7 +514,6 @@ export default function Editor() {
       <style>{`
         #bmc-wbtn { display: none !important; }
         
-        /* Magazine Editor Styles */
         .easy-email-editor-layout, 
         .arco-layout-content {
           background-color: #f0f2f5 !important;
@@ -535,7 +521,6 @@ export default function Editor() {
           background-size: 20px 20px;
         }
 
-        /* Paper Container - A4 Size (794px × 1123px) */
         div[class*="editor-container"], 
         div[class*="visual-editor"] {
            max-width: 800px !important;
@@ -547,7 +532,6 @@ export default function Editor() {
            position: relative;
         }
 
-        /* Page End Marker */
         div[class*="editor-container"]::after,
         div[class*="visual-editor"]::after {
            content: "PAGE END LIMIT (Content below this may be cut)";
@@ -569,12 +553,9 @@ export default function Editor() {
            opacity: 0.7;
         }
         
-        /* Sidebar height */
         .arco-layout-sider {
           height: calc(100vh - 65px) !important;
         }
-
-        /* PageNavigator styles */
         .page-navigator {
           background: var(--color-bg-2);
           padding: 4px 8px;

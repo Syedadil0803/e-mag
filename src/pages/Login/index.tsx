@@ -19,7 +19,7 @@ const Login: React.FC = () => {
             });
 
             if (response.success && response.user) {
-                Message.success(`Welcome ${response.user.fullName}!`);
+                Message.success(`Welcome ${response.user.name}!`);
 
                 // Get the appropriate dashboard route based on user role
                 const dashboardRoute = getUserDashboardRoute();
@@ -75,11 +75,15 @@ const Login: React.FC = () => {
                         </Button>
 
                         <div className={styles.divider}>
-                            <span>OR</span>
+                            <span>Don't have an account?</span>
                         </div>
 
-                        <Button type="secondary" className={styles.ssoButton}>
-                            Sign in with Institution SSO
+                        <Button
+                            type="secondary"
+                            className={styles.ssoButton}
+                            onClick={() => history.push('/signup')}
+                        >
+                            Create Account
                         </Button>
                     </Form>
 

@@ -45,7 +45,6 @@ export const template = {
   },
   fetchDefaultTemplate: () => {
     const pageBlock = BlockManager.getBlockByType(BasicType.PAGE)?.create({
-      // @ts-ignore: Object is possibly 'null'.
       attributes: {
         width: '794px',
       },
@@ -61,7 +60,6 @@ export const template = {
   },
   fetchDefaultTemplateOriginalData: () => {
     const pageBlock = BlockManager.getBlockByType(BasicType.PAGE)?.create({
-      // @ts-ignore: Object is possibly 'null'.
       attributes: {
         width: '794px',
       },

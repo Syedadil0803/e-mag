@@ -632,7 +632,7 @@ ${slides}
            navigator.share({
                title: document.title,
                url: window.location.href
-           }).catch(console.error);
+           }).catch(() => {});
        } else {
            const dummy = document.createElement('input');
            document.body.appendChild(dummy);

@@ -6,8 +6,6 @@ import { elementChildren, wrapWithComponent } from './utils/components';
 import { Item } from './components/Item';
 import styles from './Stack.module.scss';
 
-// From polaris-react
-
 type Spacing = 'extraTight' | 'tight' | 'loose' | 'extraLoose' | 'none';
 
 type Alignment = 'leading' | 'trailing' | 'center' | 'fill' | 'baseline';
