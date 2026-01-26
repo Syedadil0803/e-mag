@@ -1,5 +1,4 @@
 import axios, { AxiosResponse, AxiosRequestConfig } from "axios";
-import { UserStorage } from "@demo/utils/user-storage";
 
 export const axiosInstance = axios.create({
   baseURL: "https://api.cwd.speedstack.tech/campaign",

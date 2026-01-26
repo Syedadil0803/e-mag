@@ -1,14 +1,30 @@
-import React, { useState } from 'react';
-import { Button, Input, Message } from '@arco-design/web-react';
+import React, { useState, useEffect } from 'react';
+import { Message } from '@arco-design/web-react';
 import { IconLeft, IconPlus } from '@arco-design/web-react/icon';
-import { useHistory } from 'react-router-dom';
+import { useHistory, useLocation } from 'react-router-dom';
+import { createContentVersion } from '@demo/services/content';
+import { getCurrentUser } from '@demo/services/auth';
 import './styles.css';
 
 const CreateMagazine = () => {
     const history = useHistory();
-    const [step, setStep] = useState(1);
+    const location = useLocation();
     const [selectedTemplate, setSelectedTemplate] = useState<number | null>(null);
-    const [magazineName, setMagazineName] = useState('');
+    const [creating, setCreating] = useState(false);
+    const currentUser = getCurrentUser();
+
+    // Get content_id and title from URL params
+    const params = new URLSearchParams(location.search);
+    const contentId = params.get('content_id');
+    const titleFromUrl = params.get('title');
+
+    // Validate that we have required params
+    useEffect(() => {
+        if (!contentId || !titleFromUrl) {
+            Message.error('Missing content information. Please create content first.');
+            history.push('/content');
+        }
+    }, [contentId, titleFromUrl, history]);
 
     // Enhanced templates data with gradients/colors
     const templates = [
@@ -30,120 +46,108 @@ const CreateMagazine = () => {
         },
     ];
 
-    const handleTemplateSelect = (id: number) => {
-        setSelectedTemplate(id);
-        setStep(2);
-    };
-
-    const handleCreate = () => {
-        if (!magazineName.trim()) {
-            Message.error('Please enter a magazine name');
+    const handleTemplateSelect = async (templateId: number) => {
+        if (!contentId) {
+            Message.error('Content ID is missing');
             return;
         }
 
-        if (selectedTemplate !== null) {
-            // If selectedTemplate is 0 (Blank), don't pass template_id so it uses default/empty content
-            const query = selectedTemplate === 0
-                ? `?subject=${encodeURIComponent(magazineName)}`
-                : `?template_id=${selectedTemplate}&subject=${encodeURIComponent(magazineName)}`;
-            history.push(`/editor${query}`);
+        setCreating(true);
+        try {
+            // Create a new content version
+            const versionResult = await createContentVersion(contentId, {
+                version_number: '1.0',
+                state: 'draft',
+                is_live: false,
+                created_by: currentUser?.id
+            });
+
+            if (versionResult.success) {
+                const contentVersionId = versionResult.data._id;
+
+                // Navigate to editor with template, content_id, and content_version_id
+                const magazineName = titleFromUrl ? decodeURIComponent(titleFromUrl) : 'Untitled';
+                let query = templateId === 0
+                    ? `?subject=${encodeURIComponent(magazineName)}`
+                    : `?template_id=${templateId}&subject=${encodeURIComponent(magazineName)}`;
+
+                query += `&content_id=${contentId}&content_version_id=${contentVersionId}`;
+
+                history.push(`/editor${query}`);
+            } else {
+                Message.error(versionResult.message || 'Failed to create version');
+                setCreating(false);
+            }
+        } catch (error) {
+            Message.error('Failed to create content version');
+            console.error('Error creating version:', error);
+            setCreating(false);
         }
     };
 
     const goBack = () => {
-        if (step === 2) {
-            setStep(1);
-        } else {
-            history.goBack();
-        }
+        history.goBack();
     };
 
     return (
         <div className="create-magazine-container">
-            <button className="back-button" onClick={goBack}>
+            <button className="back-button" onClick={goBack} disabled={creating}>
                 <IconLeft style={{ fontSize: 20 }} />
             </button>
 
             <div className="header-section fade-in">
                 <h1 className="page-title">
-                    {step === 1 ? 'Design Your Masterpiece' : 'Name Your Magazine'}
+                    Choose Your Template
                 </h1>
                 <p className="page-subtitle">
-                    {step === 1
-                        ? 'Select a template to get started with your new publication.'
-                        : 'Choose a memorable name that captures the essence of your work.'}
+                    Select a template to get started with "{titleFromUrl ? decodeURIComponent(titleFromUrl) : 'your magazine'}"
                 </p>
             </div>
 
-            {step === 1 && (
-                <div className="template-grid fade-in" style={{ animationDelay: '0.1s' }}>
-                    {/* Blank Option */}
+            <div className="template-grid fade-in" style={{ animationDelay: '0.1s' }}>
+                {/* Blank Option */}
+                <div
+                    className={`template-card ${selectedTemplate === 0 ? 'selected' : ''} ${creating ? 'disabled' : ''}`}
+                    onClick={() => !creating && handleTemplateSelect(0)}
+                >
+                    <div className="card-cover blank-cover">
+                        <div className="cover-content">
+                            <div className="plus-icon">
+                                <IconPlus />
+                            </div>
+                            <div className="template-preview-text" style={{ fontSize: 20, color: '#666' }}> Blank Canvas</div>
+                        </div>
+                    </div>
+                    <div className="card-info">
+                        <div className="card-title">Start from Scratch</div>
+                        <div className="card-desc">Build your design from the ground up, exactly how you envision it.</div>
+                    </div>
+                </div>
+
+                {templates.map(t => (
                     <div
-                        className={`template-card ${selectedTemplate === 0 ? 'selected' : ''}`}
-                        onClick={() => handleTemplateSelect(0)}
+                        key={t.id}
+                        className={`template-card ${selectedTemplate === t.id ? 'selected' : ''} ${creating ? 'disabled' : ''}`}
+                        onClick={() => !creating && handleTemplateSelect(t.id)}
                     >
-                        <div className="card-cover blank-cover">
-                            <div className="cover-content">
-                                <div className="plus-icon">
-                                    <IconPlus />
-                                </div>
-                                <div className="template-preview-text" style={{ fontSize: 20, color: '#666' }}> Blank Canvas</div>
+                        <div className="card-cover" style={{ background: t.bg }}>
+                            <div className="cover-content" style={{ color: t.textColor }}>
+                                <div className="template-preview-text">{t.name}</div>
                             </div>
                         </div>
                         <div className="card-info">
-                            <div className="card-title">Start from Scratch</div>
-                            <div className="card-desc">Build your design from the ground up, exactly how you envision it.</div>
+                            <div className="card-title">{t.name}</div>
+                            <div className="card-desc">{t.description}</div>
                         </div>
                     </div>
+                ))}
+            </div>
 
-                    {templates.map(t => (
-                        <div
-                            key={t.id}
-                            className={`template-card ${selectedTemplate === t.id ? 'selected' : ''}`}
-                            onClick={() => handleTemplateSelect(t.id)}
-                        >
-                            <div className="card-cover" style={{ background: t.bg }}>
-                                <div className="cover-content" style={{ color: t.textColor }}>
-                                    <div className="template-preview-text">{t.name}</div>
-                                </div>
-                            </div>
-                            <div className="card-info">
-                                <div className="card-title">{t.name}</div>
-                                <div className="card-desc">{t.description}</div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            )}
-
-            {step === 2 && (
-                <div className="naming-container fade-in" style={{ animationDelay: '0.1s' }}>
-
-                    <label className="input-label">Publication Title</label>
-                    <Input
-                        className="magazine-title-input"
-                        placeholder="e.g. The Morning Edition"
-                        value={magazineName}
-                        onChange={setMagazineName}
-                        autoFocus
-                        onPressEnter={handleCreate}
-                    />
-
-                    <div className="action-buttons">
-                        <Button
-                            className="btn-large btn-secondary"
-                            onClick={() => setStep(1)}
-                        >
-                            Change Template
-                        </Button>
-                        <Button
-                            type="primary"
-                            className="btn-large btn-primary"
-                            onClick={handleCreate}
-                            disabled={!magazineName.trim()}
-                        >
-                            Start Editing
-                        </Button>
+            {creating && (
+                <div className="creating-overlay">
+                    <div className="creating-message">
+                        <div className="spinner"></div>
+                        <p>Creating your magazine...</p>
                     </div>
                 </div>
             )}

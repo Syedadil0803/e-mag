@@ -1,10 +1,12 @@
 
 import React, { useState, useMemo } from 'react';
-import { Tabs, Button, Select } from '@arco-design/web-react';
+import { Tabs, Button, Select, Modal, Input, Message } from '@arco-design/web-react';
 import { IconSearch, IconMoreVertical, IconPlus } from '@arco-design/web-react/icon';
 import styles from '../components/Components.module.scss';
 import { useHistory } from 'react-router-dom';
 import { usePermissions } from '../../../hooks/usePermissions';
+import { createContent } from '@demo/services/content';
+import { getCurrentUser } from '@demo/services/auth';
 
 const TabPane = Tabs.TabPane;
 
@@ -12,9 +14,44 @@ const EditorDashboard: React.FC = () => {
     const [activeTab, setActiveTab] = useState('1');
     const history = useHistory();
     const { canAccessTab, isAdmin, canPerformAction, permissions } = usePermissions();
+    const currentUser = getCurrentUser();
+    const [createModalVisible, setCreateModalVisible] = useState(false);
+    const [newContentTitle, setNewContentTitle] = useState('');
+    const [creating, setCreating] = useState(false);
 
     const handleNewContent = () => {
-        history.push('/create-magazine');
+        setCreateModalVisible(true);
+    };
+
+    const handleCreateContent = async () => {
+        if (!newContentTitle.trim()) {
+            Message.warning('Please enter a title');
+            return;
+        }
+
+        setCreating(true);
+        try {
+            const result = await createContent({
+                title: newContentTitle,
+                created_by: currentUser?.id
+            });
+
+            if (result.success) {
+                Message.success('Content created successfully!');
+                setCreateModalVisible(false);
+                setNewContentTitle('');
+
+                const contentId = result.data._id;
+                history.push(`/create-magazine?content_id=${contentId}&title=${encodeURIComponent(newContentTitle)}`);
+            } else {
+                Message.error(result.message || 'Failed to create content');
+            }
+        } catch (error) {
+            Message.error('Failed to create content');
+            console.error('Error creating content:', error);
+        } finally {
+            setCreating(false);
+        }
     };
 
     const dummyArticles = [
@@ -109,6 +146,36 @@ const EditorDashboard: React.FC = () => {
                     </div>
                 ))}
             </div>
+
+            {/* Create Content Modal */}
+            <Modal
+                title="Create New Content"
+                visible={createModalVisible}
+                onOk={handleCreateContent}
+                onCancel={() => {
+                    setCreateModalVisible(false);
+                    setNewContentTitle('');
+                }}
+                confirmLoading={creating}
+                okText="Create"
+            >
+                <div style={{ marginBottom: '16px' }}>
+                    <label style={{
+                        display: 'block',
+                        marginBottom: '8px',
+                        fontWeight: 500
+                    }}>
+                        Content Title
+                    </label>
+                    <Input
+                        placeholder="Enter magazine title"
+                        value={newContentTitle}
+                        onChange={setNewContentTitle}
+                        onPressEnter={handleCreateContent}
+                        autoFocus
+                    />
+                </div>
+            </Modal>
         </div>
     );
 };

@@ -1,16 +1,134 @@
-
-import React from 'react';
-import { Tag, Select } from '@arco-design/web-react';
+import React, { useState, useEffect } from 'react';
+import { Tag, Select, Spin } from '@arco-design/web-react';
 import { IconRight } from '@arco-design/web-react/icon';
+import { getAllContent, getContentVersions } from '@demo/services/content';
+import { useHistory } from 'react-router-dom';
 import styles from '../components/Components.module.scss';
 
+interface ContentWithVersion {
+    _id?: string;
+    title: string;
+    department?: string;
+    academic_year?: string;
+    updated_at?: Date;
+    version?: {
+        _id?: string;
+        version_number: string;
+        state: string;
+        is_live: boolean;
+    } | null;
+}
+
 const AdminDashboard: React.FC = () => {
-    const stats = [
-        { title: 'Drafts', count: 12, color: '#4E7DD9' },
-        { title: 'Under Review', count: 5, color: '#FF7D00' },
-        { title: 'Approved', count: 8, color: '#14C9C9' },
-        { title: 'Published', count: 20, color: '#4E7DD9' },
-    ];
+    const history = useHistory();
+    const [loading, setLoading] = useState(true);
+    const [contents, setContents] = useState<ContentWithVersion[]>([]);
+    const [stats, setStats] = useState([
+        { title: 'Drafts', count: 0, color: '#4E7DD9' },
+        { title: 'Under Review', count: 0, color: '#FF7D00' },
+        { title: 'Approved', count: 0, color: '#14C9C9' },
+        { title: 'Published', count: 0, color: '#4E7DD9' },
+    ]);
+
+    useEffect(() => {
+        loadDashboardData();
+    }, []);
+
+    const loadDashboardData = async () => {
+        setLoading(true);
+        try {
+            const allContent = await getAllContent();
+            const contentsWithVersions: ContentWithVersion[] = [];
+
+            for (const content of allContent) {
+                if (!content._id) continue; // Skip content without _id
+                
+                try {
+                    const versions = await getContentVersions(content._id);
+                    const latestVersion = versions.length > 0 ? versions[0] : null;
+                    
+                    contentsWithVersions.push({
+                        ...content,
+                        version: latestVersion
+                    });
+                } catch (error) {
+                    contentsWithVersions.push({
+                        ...content,
+                        version: null
+                    });
+                }
+            }
+            
+            let draftCount = 0;
+            let underReviewCount = 0;
+            let approvedCount = 0;
+            let publishedCount = 0;
+
+            contentsWithVersions.forEach((content: ContentWithVersion) => {
+                if (content.version) {
+                    switch (content.version.state) {
+                        case 'draft':
+                            draftCount++;
+                            break;
+                        case 'under_review':
+                            underReviewCount++;
+                            break;
+                        case 'approved':
+                            approvedCount++;
+                            break;
+                        case 'published':
+                            publishedCount++;
+                            break;
+                    }
+                }
+            });
+
+            setContents(contentsWithVersions);
+            setStats([
+                { title: 'Drafts', count: draftCount, color: '#4E7DD9' },
+                { title: 'Under Review', count: underReviewCount, color: '#FF7D00' },
+                { title: 'Approved', count: approvedCount, color: '#14C9C9' },
+                { title: 'Published', count: publishedCount, color: '#4E7DD9' },
+            ]);
+        } catch (error) {
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleContentClick = (content: ContentWithVersion) => {
+        if (content._id && content.version) {
+            history.push(`/editor?content_id=${content._id}&content_version_id=${content.version._id}&subject=${encodeURIComponent(content.title)}`);
+        } else if (content._id) {
+            history.push(`/create-magazine?content_id=${content._id}&title=${encodeURIComponent(content.title)}`);
+        }
+    };
+
+    const formatTimeAgo = (date?: Date) => {
+        if (!date) return 'Unknown';
+        const now = new Date();
+        const diff = now.getTime() - new Date(date).getTime();
+        const minutes = Math.floor(diff / 60000);
+        const hours = Math.floor(diff / 3600000);
+        const days = Math.floor(diff / 86400000);
+
+        if (minutes < 1) return 'Just now';
+        if (minutes < 60) return `${minutes} min ago`;
+        if (hours < 24) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+        return `${days} day${days > 1 ? 's' : ''} ago`;
+    };
+
+    const getStateLabel = (state?: string) => {
+        if (!state) return 'No Version';
+        const stateMap: Record<string, string> = {
+            draft: 'Draft',
+            under_review: 'Under Review',
+            approved: 'Approved',
+            published: 'Published',
+            archived: 'Archived'
+        };
+        return stateMap[state] || state;
+    };
 
     const getStatusColor = (status: string) => {
         switch (status.toLowerCase()) {
@@ -27,52 +145,20 @@ const AdminDashboard: React.FC = () => {
         }
     };
 
-    const recentContentData = [
-        {
-            key: '1',
-            title: 'Campus Newsletter',
-            subtitle: '12a-int-a#30 man - 3 min ago',
-            updated: '3 min ago',
-            status: 'Draft'
-        },
-        {
-            key: '2',
-            title: 'Research Digest',
-            subtitle: '12a-int-a#30 over 3 min ago',
-            updated: '3 min ago',
-            status: 'Under Review'
-        },
-        {
-            key: '3',
-            title: 'Alumni Magazine',
-            subtitle: '12a-int-a#30 man - 1 min ago',
-            updated: '1 min ago',
-            status: 'Approved'
-        },
-        {
-            key: '4',
-            title: 'Faculty Updates',
-            subtitle: '443-int-a#30 man - 3 min ago',
-            updated: '3 min ago',
-            status: 'Published'
-        },
-    ];
-
-    const pendingApprovalsData = [
-        { key: '1', title: 'Annual Report', subtitle: 'Carissa-Huan- 3 min ago' },
-        { key: '2', title: 'Law Faculty Journal', subtitle: '12a-inta-#1 man- 3 min ago' },
-        { key: '3', title: 'Science Weekly', subtitle: '50-1 mant-#1 man- 3 min ago' },
-        { key: '4', title: 'Thud Inothus 180', subtitle: '' },
-    ];
+    if (loading) {
+        return (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
+                <Spin size={40} />
+            </div>
+        );
+    }
 
     return (
         <div>
-            {/* Header */}
             <div style={{ marginBottom: 24 }}>
                 <h2 style={{ fontSize: 24, fontWeight: 700, margin: 0, color: '#1d2129' }}>Admin Dashboard</h2>
             </div>
 
-            {/* Stats Cards */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
                 {stats.map((stat, index) => (
                     <div
@@ -93,116 +179,86 @@ const AdminDashboard: React.FC = () => {
                         <div style={{ fontSize: 32, fontWeight: 700, color: '#1d2129' }}>
                             {stat.count}
                         </div>
-                        {/* Decorative wave */}
-                        <div
-                            style={{
-                                position: 'absolute',
-                                bottom: 0,
-                                right: 0,
-                                width: 80,
-                                height: 40,
-                                background: `linear-gradient(135deg, ${stat.color}15 0%, ${stat.color}05 100%)`,
-                                borderRadius: '100% 0 0 0'
-                            }}
-                        />
                     </div>
                 ))}
             </div>
 
-            {/* Two Column Layout */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 420px', gap: 24 }}>
-                {/* Recent Content Section */}
                 <div className={styles.reviewerSection}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                        <h3 style={{ fontSize: 18, fontWeight: 600, margin: 0, color: '#1d2129' }}>Recent Content</h3>
-                    </div>
-
+                    <h3 style={{ fontSize: 18, fontWeight: 600, margin: 0, marginBottom: 16, color: '#1d2129' }}>Recent Content</h3>
                     <div className={styles.reviewerTable}>
-                        {/* Table Header */}
-                        <div className={styles.reviewerTableHeader}>
-                            <div style={{ flex: '1 1 300px', fontSize: 12, color: '#86909c', fontWeight: 500 }}>
-                                Article
-                            </div>
-                            <div style={{ flex: '0 0 180px' }}>
-                                <Select
-                                    placeholder="Last Updated"
-                                    size="small"
-                                    style={{ width: '100%', fontSize: 12 }}
-                                    bordered={false}
-                                />
-                            </div>
-                            <div style={{ flex: '0 0 140px', fontSize: 12, color: '#86909c', fontWeight: 500 }}>
-                                Status
-                            </div>
-                            <div style={{ flex: '0 0 40px' }}></div>
-                        </div>
-
-                        {/* Table Rows */}
-                        {recentContentData.map((item) => (
-                            <div key={item.key} className={styles.reviewerTableRow} style={{ cursor: 'pointer' }}>
-                                <div style={{ flex: '1 1 300px' }}>
-                                    <div style={{ fontSize: 14, fontWeight: 600, color: '#1d2129', marginBottom: 4 }}>
-                                        {item.title}
+                        {contents.length > 0 ? (
+                            contents.slice(0, 5).map((content, index) => (
+                                <div
+                                    key={content._id || index}
+                                    className={styles.reviewerTableRow}
+                                    style={{ cursor: 'pointer' }}
+                                    onClick={() => handleContentClick(content)}
+                                >
+                                    <div style={{ flex: '1' }}>
+                                        <div style={{ fontSize: 14, fontWeight: 600, color: '#1d2129', marginBottom: 4 }}>
+                                            {content.title}
+                                        </div>
+                                        <div style={{ fontSize: 12, color: '#86909c' }}>
+                                            {content.department || 'General'} • {content.academic_year || 'N/A'}
+                                        </div>
                                     </div>
-                                    <div style={{ fontSize: 12, color: '#86909c' }}>{item.subtitle}</div>
+                                    <div style={{ flex: '0 0 140px' }}>
+                                        <Tag
+                                            style={{
+                                                background: getStatusColor(getStateLabel(content.version?.state)).bg,
+                                                color: getStatusColor(getStateLabel(content.version?.state)).color,
+                                                border: 'none',
+                                                borderRadius: 4,
+                                                padding: '4px 12px',
+                                                fontSize: 12,
+                                                fontWeight: 600
+                                            }}
+                                        >
+                                            {getStateLabel(content.version?.state)}
+                                        </Tag>
+                                    </div>
                                 </div>
-                                <div style={{ flex: '0 0 180px', fontSize: 13, color: '#4e5969' }}>
-                                    {item.updated}
-                                </div>
-                                <div style={{ flex: '0 0 140px' }}>
-                                    <Tag
-                                        style={{
-                                            background: getStatusColor(item.status).bg,
-                                            color: getStatusColor(item.status).color,
-                                            border: 'none',
-                                            borderRadius: 4,
-                                            padding: '4px 12px',
-                                            fontSize: 12,
-                                            fontWeight: 600
-                                        }}
-                                    >
-                                        {item.status}
-                                    </Tag>
-                                </div>
-                                <div style={{ flex: '0 0 40px', display: 'flex', justifyContent: 'center' }}>
-                                    <IconRight style={{ fontSize: 16, color: '#86909c', cursor: 'pointer' }} />
-                                </div>
+                            ))
+                        ) : (
+                            <div style={{ padding: '40px', textAlign: 'center', color: '#86909c' }}>
+                                No content yet. Create your first magazine to get started!
                             </div>
-                        ))}
+                        )}
                     </div>
                 </div>
 
-                {/* Pending Approvals Section */}
                 <div className={styles.reviewerSection}>
                     <h3 style={{ fontSize: 18, fontWeight: 600, margin: 0, marginBottom: 16, color: '#1d2129' }}>
                         Pending Approvals
                     </h3>
-
                     <div className={styles.reviewerTable}>
-                        {/* Table Header */}
-                        <div className={styles.reviewerTableHeader}>
-                            <div style={{ flex: '1', fontSize: 12, color: '#86909c', fontWeight: 500 }}>
-                                Article
-                            </div>
-                            <div style={{ flex: '0 0 40px' }}></div>
-                        </div>
-
-                        {/* List Items */}
-                        {pendingApprovalsData.map((item) => (
-                            <div key={item.key} className={styles.reviewerTableRow} style={{ cursor: 'pointer' }}>
-                                <div style={{ flex: '1' }}>
-                                    <div style={{ fontSize: 14, fontWeight: 600, color: '#1d2129', marginBottom: 4 }}>
-                                        {item.title}
+                        {contents.filter(c => c.version?.state === 'under_review').length > 0 ? (
+                            contents
+                                .filter(c => c.version?.state === 'under_review')
+                                .slice(0, 4)
+                                .map((content, index) => (
+                                    <div
+                                        key={content._id || index}
+                                        className={styles.reviewerTableRow}
+                                        style={{ cursor: 'pointer' }}
+                                        onClick={() => handleContentClick(content)}
+                                    >
+                                        <div style={{ flex: '1' }}>
+                                            <div style={{ fontSize: 14, fontWeight: 600, color: '#1d2129', marginBottom: 4 }}>
+                                                {content.title}
+                                            </div>
+                                            <div style={{ fontSize: 12, color: '#86909c' }}>
+                                                Updated {formatTimeAgo(content.updated_at)}
+                                            </div>
+                                        </div>
                                     </div>
-                                    {item.subtitle && (
-                                        <div style={{ fontSize: 12, color: '#86909c' }}>{item.subtitle}</div>
-                                    )}
-                                </div>
-                                <div style={{ flex: '0 0 40px', display: 'flex', justifyContent: 'center' }}>
-                                    <IconRight style={{ fontSize: 16, color: '#86909c', cursor: 'pointer' }} />
-                                </div>
+                                ))
+                        ) : (
+                            <div style={{ padding: '40px', textAlign: 'center', color: '#86909c' }}>
+                                No pending approvals
                             </div>
-                        ))}
+                        )}
                     </div>
                 </div>
             </div>

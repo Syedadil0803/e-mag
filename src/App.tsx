@@ -15,6 +15,7 @@ import CreateMagazine from '@demo/pages/CreateMagazine';
 import DashboardLayout from '@demo/pages/Dashboard/Layout';
 import AdminSettingsPage from '@demo/pages/Dashboard/AdminSettings';
 import ContentPage from '@demo/pages/Content';
+import PreviewPage from '@demo/pages/Preview';
 import ApprovalsPage from '@demo/pages/Approvals';
 
 function App() {
@@ -81,6 +82,11 @@ function App() {
                   path='/editor'
                   exact
                   component={Home}
+                />
+                <Route
+                  path='/preview'
+                  exact
+                  component={PreviewPage}
                 />
                 <Route
                   path='/create-magazine'

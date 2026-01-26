@@ -335,6 +335,32 @@ export const getUserPermissions = async (): Promise<any> => {
     }
 };
 
+/**
+ * Get user by ID
+ */
+export const getUserById = async (userId: string): Promise<any> => {
+    try {
+        const response = await authAxios.get(`/Users/${userId}`);
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching user:', error);
+        return null;
+    }
+};
+
+/**
+ * Get all users
+ */
+export const getAllUsers = async (): Promise<any[]> => {
+    try {
+        const response = await authAxios.get('/Users/getAll');
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching users:', error);
+        return [];
+    }
+};
+
 // ============================================
 // EXPORTS
 // ============================================
@@ -363,5 +389,9 @@ export default {
     
     // Authorization
     checkAuthorization,
-    getUserPermissions
+    getUserPermissions,
+    
+    // Users
+    getUserById,
+    getAllUsers
 };

@@ -8,7 +8,7 @@ import AuthorDashboard from './roles/AuthorDashboard';
 import ReviewerDashboard from './roles/ReviewerDashboard';
 import { UserRole } from './types';
 import { Spin, Message } from '@arco-design/web-react';
-import { getCurrentUser, isAuthenticated, updateUserProfile } from '@demo/services/auth';
+import { getCurrentUser, isAuthenticated } from '@demo/services/auth';
 
 const Dashboard: React.FC = () => {
     const [userRole, setUserRole] = useState<UserRole | null>(null);
@@ -27,9 +27,23 @@ const Dashboard: React.FC = () => {
 
             const currentUser = getCurrentUser();
             if (currentUser) {
-                // Ensure role from auth service matches Dashboard types
-                // Casting as any to string to match if there are slight differences, but they should be aligned now
-                setUserRole(currentUser.role as unknown as UserRole);
+                // Map backend role names to frontend UserRole types
+                const roleMap: Record<string, UserRole> = {
+                    'Super Administrator': 'Admin',
+                    'Content Administrator': 'Editor',
+                    'Approver': 'Reviewer',
+                    'Reader': 'Author',
+                    'IT/System Administrator': 'Admin',
+                    'Admin': 'Admin',
+                    'Editor': 'Editor',
+                    'Author': 'Author',
+                    'Reviewer': 'Reviewer'
+                };
+
+                const mappedRole = roleMap[currentUser.role] || 'Editor';
+                console.log('🔑 Role mapping:', { backendRole: currentUser.role, mappedRole });
+
+                setUserRole(mappedRole);
                 setUserName(currentUser.name || (currentUser as any).fullName);
                 setUserAvatar(currentUser.avatar);
             }

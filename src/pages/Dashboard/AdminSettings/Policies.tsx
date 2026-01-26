@@ -366,10 +366,7 @@ const PoliciesTab: React.FC = () => {
                 columns={columns}
                 data={filteredGroupedData}
                 rowKey="roleId"
-                pagination={{
-                    pageSize: 10,
-                    showTotal: true,
-                }}
+                pagination={false}
             />
 
             {/* Edit Policy Modal */}

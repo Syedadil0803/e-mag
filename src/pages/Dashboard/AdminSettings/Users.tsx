@@ -190,8 +190,8 @@ const UsersTab: React.FC = () => {
                 loading={loading}
                 columns={columns}
                 data={data}
+                pagination={false}
                 rowKey="_id"
-                pagination={{ pageSize: 5 }}
             />
 
             {/* Edit User Modal */}

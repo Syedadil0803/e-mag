@@ -19,6 +19,8 @@ const CONTENT_API_URL = `${CONFIG.CONTENT_API_URL}/Content`;
 export interface Content {
     _id?: string;
     title: string;
+    academic_year?: string;
+    department?: string;
     created_by?: string;
     created_at?: Date;
     updated_at?: Date;
@@ -28,12 +30,14 @@ export interface ContentVersion {
     _id?: string;
     content_id: string;
     version_number: string;
-    state: string; // e.g., 'draft', 'review', 'approved', 'published'
+    state: 'draft' | 'under_review' | 'approved' | 'published' | 'archived';
     is_live: boolean;
     created_by?: string;
+    approved_by?: string;
     created_at?: Date;
     updated_at?: Date;
 }
+
 
 // ============================================
 // CONTENT API
@@ -124,22 +128,66 @@ export const getContentVersions = async (contentId: string): Promise<ContentVers
 };
 
 /**
- * Set a version as live
+ * Submit a version for review
  */
-export const setLiveVersion = async (versionId: string, contentId: string): Promise<any> => {
+export const submitForReview = async (versionId: string): Promise<any> => {
     try {
         const response = await axios.put(
-            `${CONTENT_API_URL}/versions/${versionId}/live`,
-            { contentId }
+            `${CONTENT_API_URL}/versions/${versionId}/submit-for-review`
         );
         return {
             success: true,
-            message: 'Version set as live successfully'
+            data: response.data,
+            message: 'Submitted for review successfully'
         };
     } catch (error: any) {
         return {
             success: false,
-            message: error.response?.data?.message || 'Failed to set live version'
+            message: error.response?.data?.message || 'Failed to submit for review'
+        };
+    }
+};
+
+/**
+ * Approve a version
+ */
+export const approveVersion = async (versionId: string, approvedBy: string): Promise<any> => {
+    try {
+        const response = await axios.put(
+            `${CONTENT_API_URL}/versions/${versionId}/approve`,
+            { approvedBy }
+        );
+        return {
+            success: true,
+            data: response.data,
+            message: 'Version approved successfully'
+        };
+    } catch (error: any) {
+        return {
+            success: false,
+            message: error.response?.data?.message || 'Failed to approve version'
+        };
+    }
+};
+
+/**
+ * Publish a version
+ */
+export const publishVersion = async (versionId: string, contentId: string): Promise<any> => {
+    try {
+        const response = await axios.put(
+            `${CONTENT_API_URL}/versions/${versionId}/publish`,
+            { contentId }
+        );
+        return {
+            success: true,
+            data: response.data,
+            message: 'Version published successfully'
+        };
+    } catch (error: any) {
+        return {
+            success: false,
+            message: error.response?.data?.message || 'Failed to publish version'
         };
     }
 };
@@ -154,5 +202,7 @@ export default {
     getContentById,
     createContentVersion,
     getContentVersions,
-    setLiveVersion
+    submitForReview,
+    approveVersion,
+    publishVersion
 };

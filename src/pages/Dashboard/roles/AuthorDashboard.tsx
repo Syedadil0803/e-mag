@@ -1,26 +1,108 @@
-import React, { useState } from 'react';
-import { Button, Tag, Avatar, Select } from '@arco-design/web-react';
+import React, { useState, useEffect } from 'react';
+import { Button, Tag, Avatar, Select, Spin, Modal, Input, Message } from '@arco-design/web-react';
 import { IconPlus, IconRight } from '@arco-design/web-react/icon';
 import { useHistory } from 'react-router-dom';
 import styles from '../components/Components.module.scss';
 import { usePermissions } from '../../../hooks/usePermissions';
+import { getAllContent, createContent, Content } from '@demo/services/content';
+import { getCurrentUser } from '@demo/services/auth';
 
 const AuthorDashboard: React.FC = () => {
     const history = useHistory();
     const { canPerformAction } = usePermissions();
-    const [sortFilter, setSortFilter] = useState('PUBLISHED');
+    const currentUser = getCurrentUser();
+    const [sortFilter, setSortFilter] = useState('ALL');
+    const [contents, setContents] = useState<Content[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [createModalVisible, setCreateModalVisible] = useState(false);
+    const [newContentTitle, setNewContentTitle] = useState('');
+    const [creating, setCreating] = useState(false);
 
     const canCreateContent = canPerformAction('NewContent', 'View');
 
-    const handleNewContent = () => {
-        history.push('/editor');
+    useEffect(() => {
+        loadContent();
+    }, []);
+
+    const loadContent = async () => {
+        setLoading(true);
+        try {
+            const data = await getAllContent();
+            // Filter to show only current user's content
+            const userContent = data.filter(c => c.created_by === currentUser?.id);
+            setContents(userContent);
+        } catch (error) {
+            console.error('Error loading content:', error);
+        } finally {
+            setLoading(false);
+        }
     };
 
+    const handleNewContent = () => {
+        setCreateModalVisible(true);
+    };
+
+    const handleCreateContent = async () => {
+        if (!newContentTitle.trim()) {
+            Message.warning('Please enter a title');
+            return;
+        }
+
+        setCreating(true);
+        try {
+            const result = await createContent({
+                title: newContentTitle,
+                created_by: currentUser?.id
+            });
+
+            if (result.success) {
+                Message.success('Content created successfully!');
+                setCreateModalVisible(false);
+                setNewContentTitle('');
+
+                // Navigate to template selection with the new content ID
+                const contentId = result.data._id;
+                history.push(`/create-magazine?content_id=${contentId}&title=${encodeURIComponent(newContentTitle)}`);
+            } else {
+                Message.error(result.message || 'Failed to create content');
+            }
+        } catch (error) {
+            Message.error('Failed to create content');
+            console.error('Error creating content:', error);
+        } finally {
+            setCreating(false);
+        }
+    };
+
+    const handleViewContent = (contentId: string) => {
+        history.push(`/editor?content_id=${contentId}`);
+    };
+
+    // Calculate stats from real data
     const stats = [
-        { title: 'Drafts', count: 8, color: '#4E7DD9' },
-        { title: 'Under Review', count: 3, color: '#FF7D00' },
-        { title: 'Approved', count: 5, color: '#14C9C9' },
-        { title: 'Published', count: 12, color: '#4E7DD9' },
+        { title: 'Total Content', count: contents.length, color: '#4E7DD9' },
+        {
+            title: 'This Month', count: contents.filter(c => {
+                const created = new Date(c.created_at!);
+                const now = new Date();
+                return created.getMonth() === now.getMonth() && created.getFullYear() === now.getFullYear();
+            }).length, color: '#FF7D00'
+        },
+        {
+            title: 'This Week', count: contents.filter(c => {
+                const created = new Date(c.created_at!);
+                const now = new Date();
+                const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                return created >= weekAgo;
+            }).length, color: '#14C9C9'
+        },
+        {
+            title: 'Today', count: contents.filter(c => {
+                const created = new Date(c.created_at!);
+                const now = new Date();
+                return created.toDateString() === now.toDateString();
+            }).length, color: '#00B42A'
+        },
     ];
 
     const getStatusColor = (status: string) => {
@@ -36,34 +118,23 @@ const AuthorDashboard: React.FC = () => {
         }
     };
 
-    const myContentData = [
-        {
-            key: '1',
-            title: 'Campus Newsletter',
-            subtitle: '6a-new-clarifying(9)',
-            updated: '14 minutes ago',
-            status: 'Draft'
-        },
-        {
-            key: '2',
-            title: 'Research Digest',
-            subtitle: '12a-int-30 over ca him ago',
-            updated: '2 minutes ago',
-            status: 'Draft'
-        },
-        {
-            key: '3',
-            title: 'Alumni Magazine',
-            subtitle: '12a-int-a#30 man - lot ago',
-            updated: '2 minutes ago',
-            status: 'Draft'
-        },
-    ];
+    const getTimeAgo = (date: Date) => {
+        const now = new Date();
+        const diff = now.getTime() - new Date(date).getTime();
+        const minutes = Math.floor(diff / 60000);
+        const hours = Math.floor(minutes / 60);
+        const days = Math.floor(hours / 24);
+
+        if (days > 0) return `${days} day${days > 1 ? 's' : ''} ago`;
+        if (hours > 0) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+        if (minutes > 0) return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+        return 'Just now';
+    };
 
     const recentActivity = [
-        { id: 1, user: 'Linda Brooks', time: '53 minth ago', avatar: 'LB' },
-        { id: 2, user: 'Michael Clark', time: '23min ago', avatar: 'MC' },
-        { id: 3, user: 'David Smith', time: '12 minth ago', avatar: 'DS' },
+        { id: 1, user: 'Linda Brooks', time: '53 min ago', avatar: 'LB' },
+        { id: 2, user: 'Michael Clark', time: '23 min ago', avatar: 'MC' },
+        { id: 3, user: 'David Smith', time: '12 min ago', avatar: 'DS' },
     ];
 
     return (
@@ -156,13 +227,8 @@ const AuthorDashboard: React.FC = () => {
                             <div style={{ flex: '1 1 300px', fontSize: 12, color: '#86909c', fontWeight: 500 }}>
                                 Article
                             </div>
-                            <div style={{ flex: '0 0 180px' }}>
-                                <Select
-                                    placeholder="Last Updated"
-                                    size="small"
-                                    style={{ width: '100%', fontSize: 12 }}
-                                    bordered={false}
-                                />
+                            <div style={{ flex: '0 0 180px', fontSize: 12, color: '#86909c', fontWeight: 500 }}>
+                                Last Updated
                             </div>
                             <div style={{ flex: '0 0 120px', fontSize: 12, color: '#86909c', fontWeight: 500 }}>
                                 Status
@@ -171,37 +237,54 @@ const AuthorDashboard: React.FC = () => {
                         </div>
 
                         {/* Table Rows */}
-                        {myContentData.map((item) => (
-                            <div key={item.key} className={styles.reviewerTableRow} style={{ cursor: 'pointer' }}>
-                                <div style={{ flex: '1 1 300px' }}>
-                                    <div style={{ fontSize: 14, fontWeight: 600, color: '#1d2129', marginBottom: 4 }}>
-                                        {item.title}
-                                    </div>
-                                    <div style={{ fontSize: 12, color: '#86909c' }}>{item.subtitle}</div>
-                                </div>
-                                <div style={{ flex: '0 0 180px', fontSize: 13, color: '#4e5969' }}>
-                                    {item.updated}
-                                </div>
-                                <div style={{ flex: '0 0 120px' }}>
-                                    <Tag
-                                        style={{
-                                            background: getStatusColor(item.status).bg,
-                                            color: getStatusColor(item.status).color,
-                                            border: 'none',
-                                            borderRadius: 4,
-                                            padding: '4px 12px',
-                                            fontSize: 12,
-                                            fontWeight: 600
-                                        }}
-                                    >
-                                        {item.status}
-                                    </Tag>
-                                </div>
-                                <div style={{ flex: '0 0 40px', display: 'flex', justifyContent: 'center' }}>
-                                    <IconRight style={{ fontSize: 16, color: '#86909c', cursor: 'pointer' }} />
-                                </div>
+                        {loading ? (
+                            <div style={{ textAlign: 'center', padding: '40px 0' }}>
+                                <Spin size={32} />
                             </div>
-                        ))}
+                        ) : contents.length === 0 ? (
+                            <div style={{ textAlign: 'center', padding: '40px 0', color: '#86909c' }}>
+                                <p>No content yet. Create your first magazine!</p>
+                            </div>
+                        ) : (
+                            contents.map((item) => (
+                                <div
+                                    key={item._id}
+                                    className={styles.reviewerTableRow}
+                                    style={{ cursor: 'pointer' }}
+                                    onClick={() => handleViewContent(item._id!)}
+                                >
+                                    <div style={{ flex: '1 1 300px' }}>
+                                        <div style={{ fontSize: 14, fontWeight: 600, color: '#1d2129', marginBottom: 4 }}>
+                                            {item.title}
+                                        </div>
+                                        <div style={{ fontSize: 12, color: '#86909c' }}>
+                                            Created {getTimeAgo(item.created_at!)}
+                                        </div>
+                                    </div>
+                                    <div style={{ flex: '0 0 180px', fontSize: 13, color: '#4e5969' }}>
+                                        {getTimeAgo(item.updated_at!)}
+                                    </div>
+                                    <div style={{ flex: '0 0 120px' }}>
+                                        <Tag
+                                            style={{
+                                                background: getStatusColor('draft').bg,
+                                                color: getStatusColor('draft').color,
+                                                border: 'none',
+                                                borderRadius: 4,
+                                                padding: '4px 12px',
+                                                fontSize: 12,
+                                                fontWeight: 600
+                                            }}
+                                        >
+                                            Draft
+                                        </Tag>
+                                    </div>
+                                    <div style={{ flex: '0 0 40px', display: 'flex', justifyContent: 'center' }}>
+                                        <IconRight style={{ fontSize: 16, color: '#86909c', cursor: 'pointer' }} />
+                                    </div>
+                                </div>
+                            ))
+                        )}
                     </div>
                 </div>
 
@@ -247,6 +330,36 @@ const AuthorDashboard: React.FC = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Create Content Modal */}
+            <Modal
+                title="Create New Content"
+                visible={createModalVisible}
+                onOk={handleCreateContent}
+                onCancel={() => {
+                    setCreateModalVisible(false);
+                    setNewContentTitle('');
+                }}
+                confirmLoading={creating}
+                okText="Create"
+            >
+                <div style={{ marginBottom: '16px' }}>
+                    <label style={{
+                        display: 'block',
+                        marginBottom: '8px',
+                        fontWeight: 500
+                    }}>
+                        Content Title
+                    </label>
+                    <Input
+                        placeholder="Enter magazine title"
+                        value={newContentTitle}
+                        onChange={setNewContentTitle}
+                        onPressEnter={handleCreateContent}
+                        autoFocus
+                    />
+                </div>
+            </Modal>
         </div>
     );
 };

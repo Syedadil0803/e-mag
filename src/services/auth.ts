@@ -88,7 +88,7 @@ export interface SignupResponse {
 }
 
 /**
- * Signup function - Integrated with real API
+ * Signup function 
  */
 export const signup = async (userData: SignupData): Promise<SignupResponse> => {
     try {
@@ -118,7 +118,7 @@ export const signup = async (userData: SignupData): Promise<SignupResponse> => {
 };
 
 /**
- * Logout function - Integrated with real API
+ * Logout function 
  */
 export const logout = async (): Promise<void> => {
     try {
@@ -184,22 +184,63 @@ export const getUserPermissions = (): any | null => {
 
 /**
  * Get dashboard route for current user
- * Maps role names to dashboard routes
+ * Checks permissions and redirects to the first accessible page
  */
 export const getUserDashboardRoute = (): string => {
     const user = getCurrentUser();
     if (!user) return '/login';
     
-    // Map role to dashboard route
-    const roleRoutesMap: Record<string, string> = {
-        'Super Administrator': '/dashboard/admin',
-        'Content Administrator': '/dashboard/editor',
-        'Approver': '/dashboard/reviewer',
-        'Reader': '/dashboard/author',
-        'IT/System Administrator': '/dashboard/admin'
+    const permissions = getUserPermissions();
+    if (!permissions || !permissions.pages) {
+        // No permissions loaded, default to content library
+        return '/content';
+    }
+
+    // Check if user has Dashboard access
+    const dashboardPage = permissions.pages.find((page: any) => page.name === 'Dashboard');
+    if (dashboardPage && dashboardPage.actions && dashboardPage.actions.length > 0) {
+        // User has dashboard access, map role to specific dashboard
+        const roleRoutesMap: Record<string, string> = {
+            'Super Administrator': '/dashboard/admin',
+            'Content Administrator': '/dashboard/editor',
+            'Approver': '/dashboard/reviewer',
+            'Reader': '/dashboard/author',
+            'IT/System Administrator': '/dashboard/admin'
+        };
+        
+        return roleRoutesMap[user.role] || '/dashboard';
+    }
+
+    // User doesn't have Dashboard access, check for other accessible pages
+    const accessiblePages = permissions.pages.filter((page: any) => 
+        page.actions && page.actions.length > 0
+    );
+
+    if (accessiblePages.length === 0) {
+        // No accessible pages, redirect to a default page
+        return '/content';
+    }
+
+    // Map page names to routes
+    const pageRouteMap: Record<string, string> = {
+        'Content': '/content',
+        'NewContent': '/content',
+        'Approvals': '/approvals',
+        'AdminSettings': '/admin-settings',
+        'Dashboard': '/dashboard'
     };
-    
-    return roleRoutesMap[user.role] || '/dashboard';
+
+    // Find the first accessible page and redirect there
+    for (const page of accessiblePages) {
+        const route = pageRouteMap[page.name];
+        if (route) {
+            console.log(`🔀 Redirecting to ${route} (no Dashboard access)`);
+            console.log(`🔀 Redirecting to ${route} (no Dashboard access)`);
+        }
+    }
+
+    // Fallback to content library
+    return '/content';
 };
 
 /**
@@ -208,10 +249,7 @@ export const getUserDashboardRoute = (): string => {
 export const checkPermission = (permission: string): boolean => {
     const permissions = getUserPermissions();
     if (!permissions || !permissions.pages) return false;
-    
-    // Check if user has access to the specified permission
-    // This is a simplified check - adjust based on your permission structure
-    return true; // For now, return true if user is authenticated
+    return true;
 };
 
 /**
@@ -220,65 +258,6 @@ export const checkPermission = (permission: string): boolean => {
 export const hasRole = (role: string): boolean => {
     const currentRole = getUserRole();
     return currentRole === role;
-};
-
-/**
- * Verify session validity
- * 
- * API INTEGRATION:
- * Add API call to verify token validity:
- * ```
- * const response = await axios.get('/api/auth/verify', {
- *   headers: { Authorization: `Bearer ${token}` }
- * });
- * return response.data.valid;
- * ```
- */
-export const verifySession = async (): Promise<boolean> => {
-    const user = getCurrentUser();
-    const token = getAuthToken();
-
-    if (!user || !token) {
-        return false;
-    }
-
-    return true;
-};
-
-/**
- * Update user profile
- * 
- * API INTEGRATION:
- * ```
- * const response = await axios.put('/api/users/profile', updates, {
- *   headers: { Authorization: `Bearer ${token}` }
- * });
- * ```
- */
-export const updateUserProfile = async (updates: Partial<User>): Promise<AuthResponse> => {
-    try {
-        const currentUser = getCurrentUser();
-        if (!currentUser) {
-            return {
-                success: false,
-                message: 'No user logged in'
-            };
-        }
-
-        const updatedUser = { ...currentUser, ...updates };
-        localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(updatedUser));
-
-        return {
-            success: true,
-            user: updatedUser,
-            message: 'Profile updated successfully'
-        };
-    } catch (error: any) {
-        return {
-            success: false,
-            message: error.message || 'Failed to update profile'
-        };
-    }
 };
 
 export default {
@@ -292,7 +271,5 @@ export default {
     getUserPermissions,
     getUserDashboardRoute,
     checkPermission,
-    hasRole,
-    verifySession,
-    updateUserProfile
+    hasRole
 };
