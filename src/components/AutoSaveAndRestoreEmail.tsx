@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { useFormState } from 'react-final-form';
+import React, { useEffect, useRef } from 'react';
+import { useForm, useFormState } from 'react-final-form';
 import { useInterval, useLocalStorage } from 'react-use';
 import { WarnAboutUnsavedChanges } from './WarnAboutUnsavedChanges';
 import { IEmailTemplate } from 'easy-email-editor';
@@ -29,6 +29,19 @@ export function AutoSaveAndRestoreEmail() {
   const onBeforeConfirm = () => {
     setCurrentEmail(null);
   };
+
+  const form = useForm();
+  const formRef = useRef(form);
+  formRef.current = form;
+
+  useEffect(() => {
+    return () => {
+      // Autosave on unmount only if there are changes
+      if (formRef.current && dirty) {
+        formRef.current.submit();
+      }
+    };
+  }, [dirty]);
 
   return (
     <>
